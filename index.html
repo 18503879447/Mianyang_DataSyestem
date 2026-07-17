@@ -1,0 +1,4702 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>住建系统-数据中台</title>
+    <link rel="preconnect" href="https://server.arcgisonline.com">
+    <link rel="dns-prefetch" href="https://server.arcgisonline.com">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      :root {
+        --bg: #f3f6fa;
+        --panel: #fff;
+        --line: #e4eaf1;
+        --text: #263548;
+        --muted: #7b8a9d;
+        --blue: #2475e9;
+        --blue2: #eaf3ff;
+        --cyan: #1ba7a0;
+        --green: #28a96b;
+        --amber: #e59a22;
+        --red: #e85555;
+        --shadow: 0 8px 28px rgba(43,67,98,.09);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,body {
+        height: 100%;
+        margin: 0;
+        font-family: "Microsoft YaHei","PingFang SC",Arial,sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        overflow: hidden;
+      }
+      button,input,select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      .app {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 246px 1fr;
+      }
+      .sidebar {
+        background: #fff;
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .brand {
+        height: 72px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .logo img {
+        width: 24px;
+        height: 24px;
+        display: block;
+        object-fit: contain;
+      }
+      .brand strong {
+        font-size: 14px;
+        color: #183452;
+      }
+      .brand small {
+        display: block;
+        font-size: 9px;
+        color: #94a2b3;
+        margin-top: 3px;
+        font-weight: 400;
+      }
+      .menu {
+        padding: 14px 10px;
+        overflow: auto;
+        flex: 1;
+      }
+      .menu-label {
+        padding: 10px 12px 6px;
+        font-size: 10px;
+        color: #a1adbb;
+      }
+      .nav {
+        min-height: 43px;
+        padding: 0 12px;
+        margin: 3px 0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 11px;
+        color: #5d6c7e;
+        transition: .18s;
+      }
+      .nav i {
+        font-style: normal;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        color: #5084c0;
+        background: #edf4fc;
+      }
+      .nav:hover {
+        background: #f3f7fc;
+        color: #1f548d;
+      }
+      .nav.active {
+        background: linear-gradient(90deg,#e7f1ff,#f5f9ff);
+        color: #1768c7;
+        font-weight: 600;
+      }
+      .nav.active i {
+        color: white;
+        background: #2c7be5;
+      }
+      .nav b {
+        margin-left: auto;
+        font-size: 8px;
+        border-radius: 10px;
+        padding: 2px 7px;
+        background: #eef2f6;
+        color: #8291a3;
+      }
+      .side-foot {
+        height: 65px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        gap: 9px;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #dfeeff;
+        color: #2271d5;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+      }
+      .side-foot strong {
+        font-size: 10px;
+      }
+      .side-foot small {
+        display: block;
+        font-size: 8px;
+        color: #94a0af;
+        margin-top: 2px;
+      }
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .top {
+        height: 72px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        padding: 0 25px;
+        display: flex;
+        align-items: center;
+      }
+      .top h2 {
+        font-size: 16px;
+        margin: 0;
+      }
+      .crumb {
+        font-size: 9px;
+        color: #9aa6b5;
+        margin-left: 9px;
+      }
+      .search {
+        margin-left: auto;
+        width: 245px;
+        height: 34px;
+        border: 1px solid var(--line);
+        background: #f7f9fc;
+        border-radius: 7px;
+        padding: 0 11px;
+        color: #4c5b6e;
+      }
+      .topbtn {
+        height: 34px;
+        border: 1px solid var(--line);
+        background: white;
+        color: #617084;
+        border-radius: 7px;
+        margin-left: 8px;
+        padding: 0 10px;
+      }
+      .workspace {
+        padding: 21px 24px 42px;
+        overflow: auto;
+      }
+      .page {
+        display: none;
+        animation: fade .22s;
+      }
+      .page.active {
+        display: block;
+      }
+      @keyframes fade {
+        from {
+          opacity: .25;
+          transform: translateY(3px);
+        }
+      }
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        margin-bottom: 17px;
+      }
+      .hero h1 {
+        font-size: 20px;
+        margin: 0 0 6px;
+        color: #20354e;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .btn {
+        height: 34px;
+        border: 1px solid #d8e1eb;
+        background: white;
+        color: #52657a;
+        border-radius: 7px;
+        padding: 0 13px;
+      }
+      .btn:hover {
+        border-color: #8db7e9;
+        color: #1c68c3;
+      }
+      .btn.primary {
+        color: white;
+        border-color: #2475e9;
+        background: linear-gradient(135deg,#216fdc,#3387ed);
+        box-shadow: 0 6px 15px #2475e92b;
+      }
+      .btn.danger {
+        color: var(--red);
+        border-color: #f1c3c3;
+        background: #fff8f8;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 13px;
+        margin-bottom: 14px;
+      }
+      .stat,.card,.type-card,.tablebox {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .stat {
+        padding: 15px 16px;
+        position: relative;
+      }
+      .stat:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 15px;
+        bottom: 15px;
+        width: 3px;
+        border-radius: 3px;
+        background: var(--accent,var(--blue));
+      }
+      .stat label {
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .stat strong {
+        display: block;
+        font-size: 24px;
+        color: #203b5a;
+        margin: 7px 0 3px;
+      }
+      .stat small {
+        font-size: 8px;
+        color: var(--green);
+      }
+      .card {
+        padding: 16px;
+      }
+      .card-head {
+        display: flex;
+        align-items: center;
+        margin-bottom: 13px;
+      }
+      .card-head h3 {
+        font-size: 12px;
+        margin: 0;
+      }
+      .card-head span {
+        margin-left: auto;
+        color: #8e9bac;
+        font-size: 9px;
+      }
+      .flow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .flow-node {
+        flex: 1;
+        border: 1px solid #dfe8f2;
+        background: #f8fbff;
+        border-radius: 9px;
+        padding: 12px 8px;
+        text-align: center;
+        position: relative;
+      }
+      .flow-node:not(:last-child):after {
+        content: "›";
+        position: absolute;
+        right: -10px;
+        top: 14px;
+        color: #86a5c6;
+        font-size: 20px;
+        z-index: 2;
+      }
+      .flow-node i {
+        font-style: normal;
+        display: block;
+        margin: auto auto 6px;
+        width: 29px;
+        height: 29px;
+        border-radius: 8px;
+        background: #e4f0ff;
+        color: #2573cf;
+        line-height: 29px;
+      }
+      .flow-node b {
+        display: block;
+        font-size: 9px;
+      }
+      .flow-node small {
+        font-size: 8px;
+        color: #9aa6b5;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .types {
+        display: grid;
+        grid-template-columns: repeat(5,1fr);
+        gap: 11px;
+      }
+      .type-card {
+        padding: 15px;
+        transition: .18s;
+      }
+      .type-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        border-color: #a8c8ed;
+      }
+      .type-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: #eaf3ff;
+        color: #2673cf;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+      .type-card h3 {
+        font-size: 11px;
+        margin: 0 0 5px;
+      }
+      .type-card p {
+        font-size: 8px;
+        line-height: 1.55;
+        color: var(--muted);
+        height: 27px;
+      }
+      .type-meta {
+        padding-top: 8px;
+        margin-top: 8px;
+        border-top: 1px solid #edf1f5;
+        display: flex;
+        justify-content: space-between;
+        font-size: 8px;
+        color: #96a3b2;
+      }
+      .type-card .btn {
+        width: 100%;
+        height: 29px;
+        font-size: 9px;
+        margin-top: 9px;
+      }
+      .task {
+        display: grid;
+        grid-template-columns: 30px 1fr auto;
+        gap: 9px;
+        align-items: center;
+        border: 1px solid #e8edf3;
+        border-radius: 8px;
+        padding: 9px;
+        margin: 7px 0;
+      }
+      .task i {
+        font-style: normal;
+        width: 29px;
+        height: 29px;
+        border-radius: 7px;
+        background: #edf5ff;
+        color: #2c79d1;
+        display: grid;
+        place-items: center;
+      }
+      .task b {
+        display: block;
+        font-size: 9px;
+      }
+      .task small {
+        font-size: 8px;
+        color: #98a5b4;
+      }
+      .tag {
+        font-size: 8px;
+        border-radius: 10px;
+        padding: 4px 7px;
+        background: #eaf8f1;
+        color: var(--green);
+      }
+      .tag.warn {
+        background: #fff6e7;
+        color: var(--amber);
+      }
+      .tag.bad {
+        background: #fff0f0;
+        color: var(--red);
+      }
+      .tablebox {
+        overflow: hidden;
+      }
+      .toolbar {
+        height: 55px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .toolbar input,.toolbar select,.field input,.field select {
+        height: 32px;
+        border: 1px solid #dbe3ec;
+        border-radius: 6px;
+        background: white;
+        color: #4c5d72;
+        padding: 0 9px;
+      }
+      .toolbar input {
+        width: 220px;
+      }
+      .toolbar .spacer {
+        flex: 1;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+      }
+      th {
+        text-align: left;
+        padding: 11px 12px;
+        background: #f7f9fc;
+        color: #77869a;
+        font-weight: 500;
+      }
+      td {
+        padding: 11px 12px;
+        border-top: 1px solid #edf1f5;
+        color: #526276;
+      }
+      tr:hover td {
+        background: #fafcff;
+      }
+      .link {
+        color: #2475e9;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      .progress {
+        width: 95px;
+        height: 5px;
+        background: #edf1f5;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .progress i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg,#2b7ce5,#54a3f4);
+      }
+      .module-grid {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 13px;
+      }
+      .module-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 17px;
+      }
+      .module-card .type-icon {
+        margin: 0 0 12px;
+      }
+      .module-card h3 {
+        font-size: 11px;
+        margin: 0 0 7px;
+      }
+      .module-card p {
+        font-size: 8px;
+        color: var(--muted);
+        line-height: 1.65;
+        min-height: 27px;
+      }
+      .module-card .link {
+        display: inline-block;
+        font-size: 9px;
+        margin-top: 8px;
+      }
+      .match-layout {
+        display: grid;
+        grid-template-columns: 1.35fr .8fr;
+        gap: 13px;
+      }
+      .map {
+        height: 380px;
+        background-color: #eef3ed;
+        background-image: linear-gradient(30deg,transparent 24%,#bed0c440 25%,#bed0c440 26%,transparent 27%,transparent 74%,#bed0c430 75%,#bed0c430 76%,transparent 77%),linear-gradient(90deg,transparent 24%,#bdcad642 25%,#bdcad642 26%,transparent 27%,transparent 74%,#bdcad630 75%,#bdcad630 76%,transparent 77%);
+        background-size: 65px 65px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+      .road {
+        position: absolute;
+        width: 650px;
+        height: 12px;
+        background: #d0d8de;
+        border: 2px solid #c2ccd4;
+        left: -50px;
+        top: 180px;
+        transform: rotate(-14deg);
+      }
+      .house {
+        position: absolute;
+        border: 2px solid #287bdc;
+        background: #4b98ec28;
+      }
+      .ps {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #1baa73;
+        border: 2px solid white;
+        box-shadow: 0 1px 4px #385;
+      }
+      .ps.out {
+        background: #e75c5c;
+      }
+      .map-legend {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: #ffffffeb;
+        border: 1px solid #dde5ec;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 8px;
+        box-shadow: var(--shadow);
+      }
+      .map.real-map {
+        background-image: none;
+        background-color: #dfe6ea;
+        padding: 0;
+      }
+      .real-map .leaflet-map-host {
+        position: absolute;
+        inset: 0;
+        border-radius: 10px;
+      }
+      .real-map .map-legend,
+      .real-map .map-badge,
+      .real-map .map-loading {
+        z-index: 650;
+      }
+      .map-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #ffffffeb;
+        border: 1px solid #dde5ec;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 9px;
+        color: #45566e;
+        box-shadow: var(--shadow);
+        line-height: 1.5;
+      }
+      .map-badge b {
+        color: var(--text);
+      }
+      .map-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #8695a8;
+        background: #eef2f5;
+        transition: opacity .25s ease;
+      }
+      .map-loading.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .ps-dot {
+        display: block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #e8791a;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 4px rgba(90,50,10,.5);
+      }
+      .ps-dot.bad {
+        background: #8bc34a;
+        box-shadow: 0 1px 4px rgba(40,70,10,.5);
+      }
+      .ps-pop {
+        font-size: 10px;
+        line-height: 1.6;
+      }
+      .ps-pop b {
+        font-size: 10.5px;
+      }
+      .leaflet-container {
+        font-family: inherit;
+        background: #dfe6ea;
+      }
+      .sidepanel {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 15px;
+      }
+      .sidepanel h3 {
+        font-size: 12px;
+        margin: 0 0 13px;
+      }
+      .field {
+        margin-bottom: 11px;
+      }
+      .field label {
+        font-size: 9px;
+        color: #718198;
+        display: block;
+        margin-bottom: 6px;
+      }
+      .field input,.field select {
+        width: 100%;
+      }
+      .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid #edf1f5;
+        padding: 10px 0;
+        font-size: 9px;
+      }
+      .switch {
+        width: 31px;
+        height: 17px;
+        border-radius: 9px;
+        background: #2b7ce5;
+        position: relative;
+      }
+      .switch:after {
+        content: "";
+        position: absolute;
+        width: 13px;
+        height: 13px;
+        background: white;
+        border-radius: 50%;
+        right: 2px;
+        top: 2px;
+      }
+      .audit-grid {
+        display: grid;
+        grid-template-columns: 225px 1fr;
+        gap: 13px;
+      }
+      .rules {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px;
+      }
+      .rules h3 {
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+      .rule {
+        padding: 11px 9px;
+        border-radius: 7px;
+        font-size: 9px;
+        color: #64758a;
+        cursor: pointer;
+      }
+      .rule:hover,.rule.active {
+        background: #eaf3ff;
+        color: #216fc9;
+      }
+      .audit-main {
+        display: grid;
+        grid-template-columns: 1.3fr .78fr;
+        gap: 13px;
+      }
+      .error-area {
+        position: absolute;
+        border: 3px solid #ee5959;
+        background: #ef59592e;
+        width: 70px;
+        height: 52px;
+        left: 185px;
+        top: 86px;
+      }
+      .result-row {
+        grid-column: 1/-1;
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 9px;
+      }
+      .mini {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 11px;
+      }
+      .mini span {
+        font-size: 8px;
+        color: var(--muted);
+      }
+      .mini b {
+        display: block;
+        font-size: 17px;
+        margin-top: 5px;
+      }
+      .timeline {
+        position: relative;
+        padding-left: 18px;
+      }
+      .timeline:before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        bottom: 5px;
+        width: 1px;
+        background: #dbe4ed;
+      }
+      .event {
+        position: relative;
+        margin: 0 0 14px;
+        padding: 0 0 0 9px;
+      }
+      .event:before {
+        content: "";
+        position: absolute;
+        left: -16px;
+        top: 3px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #2d7fe5;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px #a9c9ec;
+      }
+      .event b {
+        font-size: 9px;
+      }
+      .event p {
+        font-size: 8px;
+        color: var(--muted);
+        margin: 3px 0;
+      }
+      .mask {
+        position: fixed;
+        inset: 0;
+        background: #18273a80;
+        backdrop-filter: blur(2px);
+        z-index: 20;
+        display: none;
+      }
+      .mask.show {
+        display: block;
+      }
+      .wizard {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: min(1040px,88vw);
+        height: 100%;
+        background: #f5f7fa;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -18px 0 55px #233b5e33;
+      }
+      .wiz-head {
+        height: 72px;
+        background: white;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+      }
+      .wiz-head .type-icon {
+        margin: 0 11px 0 0;
+      }
+      .wiz-head h2 {
+        font-size: 15px;
+        margin: 0;
+      }
+      .wiz-head small {
+        display: block;
+        font-size: 9px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .close {
+        margin-left: auto;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--line);
+        background: #f7f9fc;
+        border-radius: 7px;
+        color: #65758a;
+      }
+      .wiz-steps {
+        height: 84px;
+        background: white;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+      }
+      .step {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        color: #91a0b1;
+        font-size: 9px;
+      }
+      .step:after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: #dbe4ee;
+        margin: 0 9px;
+      }
+      .step:last-child:after {
+        display: none;
+      }
+      .step i {
+        font-style: normal;
+        width: 26px;
+        height: 26px;
+        border: 1px solid #ccd7e3;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        margin-right: 6px;
+      }
+      .step.active {
+        color: #2475e9;
+      }
+      .step.active i {
+        color: white;
+        border-color: #2475e9;
+        background: #2475e9;
+      }
+      .wiz-body {
+        flex: 1;
+        overflow: auto;
+        padding: 20px 25px;
+      }
+      .wiz-body h3 {
+        font-size: 13px;
+        margin: 0 0 5px;
+      }
+      .hint {
+        font-size: 9px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+      .source-options {
+        display: grid;
+        grid-template-columns: repeat(5,1fr);
+        gap: 9px;
+      }
+      .source-option {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 13px 10px;
+        text-align: center;
+        font-size: 9px;
+        color: #67788c;
+        cursor: pointer;
+        user-select: none;
+        min-height: 88px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+      }
+      .source-option:hover {
+        transform: translateY(-2px);
+        border-color: #8bb8ed;
+        box-shadow: 0 8px 20px rgba(36,117,233,.10);
+      }
+      .source-option:focus-visible {
+        outline: 3px solid rgba(36,117,233,.18);
+        outline-offset: 2px;
+      }
+      .source-option small {
+        display: block;
+        margin-top: 4px;
+        color: #98a6b7;
+        font-size: 8px;
+        line-height: 1.4;
+      }
+      .source-option b {
+        display: block;
+        font-size: 20px;
+        margin-bottom: 5px;
+        color: #6c96c4;
+      }
+      .source-option.active {
+        border-color: #4d94e8;
+        background: #edf5ff;
+        color: #2475e9;
+        box-shadow: inset 0 0 0 1px rgba(36,117,233,.08);
+      }
+      .source-option.active:after {
+        content: "已选择";
+        position: absolute;
+        right: 7px;
+        top: 7px;
+        padding: 2px 6px;
+        border-radius: 9px;
+        background: #2475e9;
+        color: #fff;
+        font-size: 8px;
+        line-height: 1.4;
+      }
+      .source-option.active b {
+        color: #2475e9;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .form-section {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 15px;
+      }
+      .form-section.full {
+        grid-column: 1/-1;
+      }
+      .form-section h4 {
+        font-size: 10px;
+        margin: 0 0 12px;
+      }
+      .path-input {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 7px;
+      }
+      .path-input input {
+        width: 100%;
+        height: 33px;
+        border: 1px solid #dbe3ec;
+        border-radius: 6px;
+        padding: 0 9px;
+        color: #40546b;
+      }
+      .source-config-panel {
+        margin-top: 13px;
+        animation: fade .18s ease;
+      }
+      .source-config-panel .form-section {
+        min-width: 0;
+      }
+      .field textarea {
+        width: 100%;
+        min-height: 72px;
+        resize: vertical;
+        border: 1px solid #dbe3ec;
+        border-radius: 6px;
+        background: white;
+        color: #4c5d72;
+        padding: 8px 9px;
+        font: inherit;
+        line-height: 1.55;
+      }
+      .source-tip {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border: 1px solid #d9e8f8;
+        border-radius: 7px;
+        background: #f6faff;
+        color: #5d7189;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+      .source-tip b {
+        color: #2475e9;
+        white-space: nowrap;
+      }
+      .source-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+      }
+      .source-actions .status {
+        color: #28a96b;
+        font-size: 9px;
+      }
+
+      .scanbox {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .scan-summary {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        border-bottom: 1px solid var(--line);
+      }
+      .scan-stat {
+        padding: 13px;
+        border-right: 1px solid var(--line);
+      }
+      .scan-stat:last-child {
+        border-right: 0;
+      }
+      .scan-stat span {
+        font-size: 8px;
+        color: var(--muted);
+      }
+      .scan-stat b {
+        display: block;
+        font-size: 16px;
+        margin-top: 4px;
+      }
+      .catalog-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 13px;
+      }
+      .tree,.catalog-info {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 13px;
+      }
+      .tree h4,.catalog-info h4 {
+        font-size: 10px;
+        margin: 0 0 10px;
+      }
+      .tree-node {
+        font-size: 9px;
+        padding: 8px;
+        border-radius: 6px;
+        color: #5d7086;
+        cursor: pointer;
+      }
+      .tree-node.child {
+        padding-left: 27px;
+      }
+      .tree-node.grand {
+        padding-left: 46px;
+      }
+      .tree-node.active {
+        background: #eaf3ff;
+        color: #2475e9;
+      }
+      .mapping {
+        display: grid;
+        grid-template-columns: 1fr 36px 1fr 110px;
+        gap: 7px;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #edf1f5;
+        font-size: 9px;
+      }
+      .mapping.header {
+        color: #8795a6;
+        background: #f7f9fc;
+      }
+      .map-arrow {
+        text-align: center;
+        color: #4388d7;
+      }
+      .rule-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .quality-rule {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .quality-rule .row {
+        display: flex;
+        align-items: center;
+      }
+      .check {
+        width: 15px;
+        height: 15px;
+        background: #2475e9;
+        color: white;
+        border-radius: 3px;
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        margin-right: 8px;
+      }
+      .quality-rule b {
+        font-size: 9px;
+      }
+      .quality-rule small {
+        display: block;
+        font-size: 8px;
+        color: var(--muted);
+        margin: 5px 0 8px 23px;
+      }
+      .inline-param {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-left: 23px;
+        font-size: 8px;
+        color: #78889b;
+      }
+      .inline-param input {
+        width: 70px;
+        height: 26px;
+        border: 1px solid #dae3ed;
+        border-radius: 5px;
+        padding: 0 6px;
+      }
+      .summary {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 17px;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 12px;
+      }
+      .summary-item {
+        border-bottom: 1px solid #edf1f5;
+        padding: 8px 0;
+      }
+      .summary-item span {
+        display: block;
+        font-size: 8px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .summary-item b {
+        font-size: 10px;
+      }
+      .notice {
+        margin-top: 13px;
+        padding: 11px;
+        border-radius: 7px;
+        border: 1px solid #bcd6f4;
+        background: #eef6ff;
+        color: #376898;
+        font-size: 9px;
+      }
+      .wiz-foot {
+        height: 66px;
+        background: white;
+        border-top: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+      }
+      .wiz-foot .left {
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .wiz-foot .right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+      }
+      .toast {
+        position: fixed;
+        right: 25px;
+        bottom: 25px;
+        background: #263d59;
+        color: white;
+        padding: 13px 18px;
+        border-radius: 8px;
+        font-size: 9px;
+        box-shadow: 0 12px 35px #1f365a44;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: .22s;
+        z-index: 40;
+		visibility: hidden;
+		pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: none;
+      }
+      @media(max-width:1100px) {
+        .app {
+          grid-template-columns: 215px;
+        }
+        .types {
+          grid-template-columns: repeat(3,1fr);
+        }
+        .stats {
+          grid-template-columns: repeat(2,1fr);
+        }
+        .module-grid {
+          grid-template-columns: repeat(2,1fr);
+        }
+        .grid2,.match-layout {
+          grid-template-columns: 1fr;
+        }
+        .search {
+          display: none;
+        }
+      }
+      /* Readability pass: use a conventional desktop admin-interface type scale. */ html,body {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .app {
+        grid-template-columns: 268px 1fr;
+      }
+      .brand {
+        height: 76px;
+        padding: 0 18px;
+      }
+      .brand strong {
+        font-size: 15px;
+        line-height: 1.35;
+      }
+      .brand small {
+        font-size: 11px;
+        line-height: 1.3;
+        margin-top: 4px;
+      }
+      .menu-label {
+        font-size: 12px;
+      }
+      .nav {
+        min-height: 46px;
+        font-size: 14px;
+      }
+      .nav b {
+        font-size: 11px;
+      }
+      .side-foot {
+        height: 70px;
+      }
+      .avatar {
+        font-size: 13px;
+      }
+      .side-foot strong {
+        font-size: 13px;
+      }
+      .side-foot small {
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .top {
+        height: 76px;
+      }
+      .top h2 {
+        font-size: 18px;
+      }
+      .crumb {
+        font-size: 12px;
+      }
+      .search,.topbtn {
+        height: 38px;
+        font-size: 14px;
+      }
+      .workspace {
+        padding: 24px 26px 46px;
+      }
+      .hero {
+        margin-bottom: 20px;
+      }
+      .hero h1 {
+        font-size: 24px;
+      }
+      .hero p {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .btn {
+        height: 38px;
+        font-size: 14px;
+        padding: 0 15px;
+      }
+      .stat {
+        padding: 17px 18px;
+      }
+      .stat label {
+        font-size: 13px;
+      }
+      .stat strong {
+        font-size: 26px;
+      }
+      .stat small {
+        font-size: 12px;
+      }
+      .card {
+        padding: 18px;
+      }
+      .card-head h3 {
+        font-size: 16px;
+      }
+      .card-head span {
+        font-size: 12px;
+      }
+      .flow-node {
+        padding: 14px 8px;
+      }
+      .flow-node b {
+        font-size: 13px;
+      }
+      .flow-node small {
+        font-size: 11px;
+      }
+      .type-card {
+        padding: 16px;
+      }
+      .type-card h3 {
+        font-size: 15px;
+      }
+      .type-card p {
+        font-size: 12px;
+        line-height: 1.55;
+        height: auto;
+        min-height: 56px;
+      }
+      .type-meta {
+        font-size: 11px;
+      }
+      .type-card .btn {
+        height: 34px;
+        font-size: 13px;
+      }
+      .task {
+        grid-template-columns: 34px 1fr auto;
+        padding: 11px;
+      }
+      .task b {
+        font-size: 13px;
+      }
+      .task small {
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      .tag {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      .tablebox {
+        overflow: auto;
+      }
+      table {
+        font-size: 13px;
+        min-width: 860px;
+      }
+      th,td {
+        padding: 13px 14px;
+        white-space: nowrap;
+      }
+      .toolbar {
+        height: 62px;
+      }
+      .toolbar input,.toolbar select,.field input,.field select {
+        height: 36px;
+        font-size: 14px;
+      }
+      .module-card h3 {
+        font-size: 15px;
+      }
+      .module-card p {
+        font-size: 13px;
+        line-height: 1.65;
+        min-height: 64px;
+      }
+      .module-card .link {
+        font-size: 13px;
+      }
+      .map-legend {
+        font-size: 12px;
+      }
+      .sidepanel h3 {
+        font-size: 16px;
+      }
+      .field label {
+        font-size: 13px;
+      }
+      .switch-row {
+        font-size: 13px;
+      }
+      .rules h3 {
+        font-size: 15px;
+      }
+      .rule {
+        font-size: 13px;
+      }
+      .mini span {
+        font-size: 12px;
+      }
+      .mini b {
+        font-size: 20px;
+      }
+      .event b {
+        font-size: 13px;
+      }
+      .event p {
+        font-size: 12px;
+      }
+      .wiz-head {
+        height: 76px;
+      }
+      .wiz-head h2 {
+        font-size: 18px;
+      }
+      .wiz-head small {
+        font-size: 12px;
+      }
+      .wiz-steps {
+        height: 88px;
+      }
+      .step {
+        font-size: 12px;
+      }
+      .wiz-body h3 {
+        font-size: 18px;
+      }
+      .hint {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .source-option {
+        font-size: 13px;
+      }
+      .source-option small,.source-tip,.source-actions .status {
+        font-size: 12px;
+      }
+      .form-section h4,.tree h4,.catalog-info h4 {
+        font-size: 14px;
+      }
+      .scan-stat span {
+        font-size: 12px;
+      }
+      .scan-stat b {
+        font-size: 19px;
+      }
+      .tree-node {
+        font-size: 13px;
+      }
+      .mapping {
+        font-size: 13px;
+      }
+      .quality-rule b {
+        font-size: 13px;
+      }
+      .quality-rule small {
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .inline-param {
+        font-size: 12px;
+      }
+      .summary-item span {
+        font-size: 12px;
+      }
+      .summary-item b {
+        font-size: 13px;
+      }
+      .notice {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .wiz-foot .left {
+        font-size: 12px;
+      }
+      .toast {
+        font-size: 13px;
+      }
+      @media(max-width:1100px) {
+        .app {
+          grid-template-columns: 230px;
+        }
+      }
+
+
+      /* ===== 住建系统-数据中台：汇聚首页与交互增强 ===== */
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 8px;
+      }
+      .top-actions .topbtn {
+        margin-left: 0;
+      }
+      .message-btn {
+        position: relative;
+        padding-right: 32px;
+      }
+      .message-badge {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        background: #e85555;
+        color: #fff;
+        font-size: 11px;
+        line-height: 18px;
+      }
+      .workspace {
+        flex: 1;
+      }
+      #gather {
+        min-height: calc(100vh - 146px);
+      }
+      .task {
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .task:hover {
+        border-color: #9fc4ef;
+        background: #f8fbff;
+        transform: translateY(-1px);
+        box-shadow: 0 7px 18px rgba(42,91,145,.08);
+      }
+      .task-main {
+        min-width: 0;
+      }
+      .task-main b,
+      .task-main small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .task-progress-line {
+        display: grid;
+        grid-template-columns: minmax(80px,1fr) 38px auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 7px;
+        color: #7f8ea1;
+        font-size: 11px;
+      }
+      .task-progress-line .progress {
+        width: 100%;
+      }
+      .task-progress-line strong {
+        color: #38678f;
+        font-size: 11px;
+      }
+      .task-progress-line em {
+        font-style: normal;
+        white-space: nowrap;
+      }
+      .gather-dashboard {
+        display: grid;
+        grid-template-columns: 1.35fr .85fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .dashboard-span {
+        grid-column: 1 / -1;
+      }
+      .monitor-list {
+        display: grid;
+        gap: 9px;
+      }
+      .monitor-row {
+        display: grid;
+        grid-template-columns: minmax(210px,1.25fr) minmax(150px,.85fr) 80px 90px;
+        gap: 12px;
+        align-items: center;
+        padding: 11px 12px;
+        border: 1px solid #e8edf3;
+        border-radius: 8px;
+        background: #fbfdff;
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .monitor-row:hover {
+        border-color: #a9caee;
+        background: #f5f9ff;
+      }
+      .monitor-row b {
+        display: block;
+        font-size: 13px;
+        color: #2d4057;
+      }
+      .monitor-row small {
+        display: block;
+        margin-top: 2px;
+        color: #8a98aa;
+        font-size: 11px;
+      }
+      .monitor-progress {
+        display: grid;
+        grid-template-columns: 1fr 36px;
+        gap: 7px;
+        align-items: center;
+        font-size: 11px;
+        color: #54728f;
+      }
+      .health-list {
+        display: grid;
+        gap: 10px;
+      }
+      .health-item {
+        display: grid;
+        grid-template-columns: 32px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 11px;
+        border: 1px solid #e8edf3;
+        border-radius: 8px;
+      }
+      .health-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #edf5ff;
+        color: #2475e9;
+      }
+      .health-item b {
+        display: block;
+        font-size: 13px;
+      }
+      .health-item small {
+        display: block;
+        margin-top: 2px;
+        color: #8b99aa;
+        font-size: 11px;
+      }
+      .health-state {
+        font-size: 12px;
+        color: #28a96b;
+      }
+      .health-state.warn {
+        color: #e59a22;
+      }
+      .trend-layout {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) 250px;
+        gap: 20px;
+        align-items: stretch;
+      }
+      .trend-chart {
+        height: 185px;
+        display: grid;
+        grid-template-columns: repeat(7,1fr);
+        gap: 14px;
+        align-items: end;
+        padding: 16px 12px 0;
+        border: 1px solid #edf1f5;
+        border-radius: 9px;
+        background: linear-gradient(to top,#f7faff 1px,transparent 1px);
+        background-size: 100% 42px;
+      }
+      .trend-col {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 7px;
+      }
+      .trend-bar {
+        width: min(36px,72%);
+        min-height: 16px;
+        border-radius: 7px 7px 2px 2px;
+        background: linear-gradient(180deg,#4c9bf1,#2475e9);
+        box-shadow: 0 6px 14px rgba(36,117,233,.16);
+        position: relative;
+      }
+      .trend-bar span {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #53708d;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .trend-col small {
+        color: #8997a9;
+        font-size: 11px;
+      }
+      .trend-summary {
+        display: grid;
+        gap: 10px;
+      }
+      .trend-metric {
+        padding: 13px;
+        border: 1px solid #e8edf3;
+        border-radius: 9px;
+        background: #fbfdff;
+      }
+      .trend-metric span {
+        display: block;
+        color: #8493a6;
+        font-size: 11px;
+      }
+      .trend-metric b {
+        display: block;
+        margin-top: 5px;
+        color: #23405e;
+        font-size: 20px;
+      }
+      .trend-metric small {
+        color: #28a96b;
+        font-size: 11px;
+      }
+      .empty-note {
+        padding: 30px 14px;
+        text-align: center;
+        color: #8b99aa;
+        font-size: 12px;
+      }
+
+      /* 消息中心 */
+      .soft-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 59;
+        display: none;
+        background: rgba(29,45,65,.12);
+      }
+      .soft-backdrop.show {
+        display: block;
+      }
+      .message-drawer {
+        position: fixed;
+        right: 18px;
+        top: 66px;
+        z-index: 60;
+        width: min(430px,calc(100vw - 36px));
+        max-height: calc(100vh - 84px);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #dce5ef;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 20px 55px rgba(26,48,76,.24);
+      }
+      .message-drawer.show {
+        display: flex;
+        animation: drawerIn .2s ease;
+      }
+      @keyframes drawerIn {
+        from { opacity: 0; transform: translateY(-8px); }
+      }
+      .drawer-head {
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        border-bottom: 1px solid #e8edf3;
+      }
+      .drawer-head h3 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .drawer-head small {
+        color: #8c9aac;
+        font-size: 11px;
+      }
+      .drawer-head .spacer {
+        flex: 1;
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #dfe6ee;
+        border-radius: 7px;
+        background: #f8fafc;
+        color: #64758a;
+      }
+      .message-list {
+        overflow: auto;
+        padding: 8px;
+      }
+      .message-item {
+        display: grid;
+        grid-template-columns: 38px 1fr auto;
+        gap: 10px;
+        align-items: start;
+        padding: 12px;
+        border-radius: 9px;
+        cursor: pointer;
+        transition: .16s ease;
+      }
+      .message-item:hover {
+        background: #f5f9ff;
+      }
+      .message-item.unread {
+        background: #f4f8ff;
+      }
+      .message-item.unread:hover {
+        background: #edf5ff;
+      }
+      .message-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: #eaf3ff;
+        color: #2475e9;
+        font-size: 17px;
+      }
+      .message-icon.success { background:#eaf8f1; color:#28a96b; }
+      .message-icon.warn { background:#fff6e7; color:#e59a22; }
+      .message-icon.security { background:#f1edff; color:#7357c9; }
+      .message-item b {
+        display: block;
+        font-size: 13px;
+        color: #2d4057;
+      }
+      .message-item p {
+        margin: 4px 0 0;
+        color: #78879a;
+        font-size: 11px;
+        line-height: 1.55;
+      }
+      .message-item time {
+        color: #9aa7b6;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .unread-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: #2475e9;
+      }
+      .message-detail {
+        overflow: auto;
+        padding: 18px;
+      }
+      .message-detail h4 {
+        margin: 0 0 8px;
+        font-size: 17px;
+      }
+      .message-detail .meta {
+        margin-bottom: 16px;
+        color: #8a98aa;
+        font-size: 11px;
+      }
+      .message-detail .detail-box {
+        padding: 14px;
+        border: 1px solid #e5ebf2;
+        border-radius: 9px;
+        background: #f8fafc;
+        color: #52667c;
+        font-size: 13px;
+        line-height: 1.75;
+      }
+      .message-detail dl {
+        display: grid;
+        grid-template-columns: 92px 1fr;
+        gap: 9px 12px;
+        margin: 16px 0 0;
+        font-size: 12px;
+      }
+      .message-detail dt { color:#8b99aa; }
+      .message-detail dd { margin:0; color:#42576d; }
+
+      /* 新建任务类型选择与任务详情 */
+      .overlay-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(24,39,58,.52);
+        backdrop-filter: blur(2px);
+      }
+      .overlay-panel.show {
+        display: flex;
+      }
+      .modal-card {
+        width: min(880px,94vw);
+        max-height: 90vh;
+        overflow: auto;
+        border-radius: 13px;
+        background: #f6f8fb;
+        box-shadow: 0 24px 70px rgba(14,32,55,.3);
+      }
+      .modal-card.small {
+        width: min(720px,94vw);
+      }
+      .modal-head {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 20px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 13px 13px 0 0;
+      }
+      .modal-head h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .modal-head p {
+        margin: 3px 0 0;
+        color: #8795a7;
+        font-size: 12px;
+      }
+      .modal-head .spacer {
+        flex: 1;
+      }
+      .modal-body {
+        padding: 20px;
+      }
+      .type-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 12px;
+      }
+      .type-picker-card {
+        min-height: 170px;
+        display: flex;
+        flex-direction: column;
+        padding: 17px;
+        border: 1px solid #dfe7f0;
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .type-picker-card:hover {
+        transform: translateY(-2px);
+        border-color: #8db7e9;
+        box-shadow: 0 10px 24px rgba(36,117,233,.11);
+      }
+      .type-picker-card h3 {
+        margin: 8px 0 6px;
+        font-size: 15px;
+      }
+      .type-picker-card p {
+        flex: 1;
+        margin: 0;
+        color: #7e8c9e;
+        font-size: 12px;
+        line-height: 1.65;
+      }
+      .type-picker-card .btn {
+        width: 100%;
+        margin-top: 14px;
+      }
+      .task-drawer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: min(650px,92vw);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #f5f7fa;
+        box-shadow: -18px 0 55px rgba(35,59,94,.25);
+        animation: taskDrawerIn .22s ease;
+      }
+      @keyframes taskDrawerIn {
+        from { transform: translateX(30px); opacity:.5; }
+      }
+      .task-detail-body {
+        flex: 1;
+        overflow: auto;
+        padding: 18px;
+      }
+      .task-overview {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .task-kpi {
+        padding: 12px;
+        border: 1px solid #e2e8ef;
+        border-radius: 9px;
+        background: #fff;
+      }
+      .task-kpi span {
+        display: block;
+        color: #8997a9;
+        font-size: 11px;
+      }
+      .task-kpi b {
+        display: block;
+        margin-top: 4px;
+        color: #2e455f;
+        font-size: 15px;
+      }
+      .detail-progress-card,
+      .pipeline-card,
+      .log-card {
+        margin-top: 12px;
+        padding: 15px;
+        border: 1px solid #e2e8ef;
+        border-radius: 10px;
+        background: #fff;
+      }
+      .detail-progress-head {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .detail-progress-head b {
+        font-size: 14px;
+      }
+      .detail-progress-head strong {
+        margin-left: auto;
+        color: #2475e9;
+        font-size: 18px;
+      }
+      .detail-progress-card .progress {
+        width: 100%;
+        height: 8px;
+      }
+      .pipeline-list {
+        display: grid;
+        gap: 0;
+        margin-top: 10px;
+      }
+      .pipeline-step {
+        position: relative;
+        display: grid;
+        grid-template-columns: 28px 1fr auto;
+        gap: 10px;
+        align-items: start;
+        min-height: 64px;
+      }
+      .pipeline-step:not(:last-child):after {
+        content: "";
+        position: absolute;
+        left: 13px;
+        top: 28px;
+        bottom: -4px;
+        width: 2px;
+        background: #dfe6ee;
+      }
+      .pipeline-dot {
+        z-index: 1;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        border: 2px solid #d7e0ea;
+        background: #fff;
+        color: #93a1b1;
+        font-size: 11px;
+      }
+      .pipeline-step.done .pipeline-dot {
+        border-color: #28a96b;
+        background: #28a96b;
+        color: #fff;
+      }
+      .pipeline-step.running .pipeline-dot {
+        border-color: #2475e9;
+        background: #2475e9;
+        color: #fff;
+        box-shadow: 0 0 0 5px rgba(36,117,233,.10);
+      }
+      .pipeline-step b {
+        display: block;
+        font-size: 13px;
+      }
+      .pipeline-step p {
+        margin: 3px 0 0;
+        color: #8391a3;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .pipeline-step time {
+        color: #96a3b3;
+        font-size: 10px;
+      }
+      .log-list {
+        margin-top: 10px;
+        font-family: Consolas,"Courier New",monospace;
+        font-size: 11px;
+        line-height: 1.8;
+        color: #52677d;
+      }
+      .log-list div {
+        padding: 3px 0;
+        border-bottom: 1px dashed #eef1f5;
+      }
+      .switch {
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .switch.off {
+        background: #cbd5e1;
+      }
+      .switch.off:after {
+        right: auto;
+        left: 2px;
+      }
+      .toast.show {
+        visibility: visible;
+      }
+      .hidden-picker {
+        display: none;
+      }
+      @media(max-width:1200px) {
+        .gather-dashboard,
+        .trend-layout {
+          grid-template-columns: 1fr;
+        }
+        .type-picker-grid {
+          grid-template-columns: repeat(2,1fr);
+        }
+      }
+      @media(max-width:760px) {
+        .type-picker-grid {
+          grid-template-columns: 1fr;
+        }
+        .monitor-row {
+          grid-template-columns: 1fr;
+        }
+        .task-overview {
+          grid-template-columns: 1fr;
+        }
+      }
+
+
+      /* V2：居中可拖拽接入窗口、页面滚动、资源分层与匹配任务 */
+      .mask { z-index: 3000; }
+      .overlay-panel { z-index: 3200; }
+      .soft-backdrop { z-index: 3990; }
+      .message-drawer { z-index: 4000; }
+      .toast { z-index: 5000; }
+      .main {
+        min-height: 0;
+        overflow: hidden;
+      }
+      .workspace {
+        min-height: 0;
+        overflow-y: scroll !important;
+        overflow-x: hidden;
+        scrollbar-gutter: stable;
+        overscroll-behavior: contain;
+      }
+      .workspace::-webkit-scrollbar,
+      .wiz-body::-webkit-scrollbar,
+      .modal-card::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      .workspace::-webkit-scrollbar-thumb,
+      .wiz-body::-webkit-scrollbar-thumb,
+      .modal-card::-webkit-scrollbar-thumb {
+        border: 2px solid transparent;
+        border-radius: 10px;
+        background: #aeb9c6;
+        background-clip: padding-box;
+      }
+      .workspace::-webkit-scrollbar-track,
+      .wiz-body::-webkit-scrollbar-track,
+      .modal-card::-webkit-scrollbar-track {
+        background: #edf1f5;
+      }
+      .page {
+        min-height: calc(100vh - 124px);
+        padding-bottom: 34px;
+      }
+      .mask {
+        align-items: center;
+        justify-content: center;
+        padding: 26px;
+      }
+      .mask.show {
+        display: flex;
+      }
+      .wizard {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        right: auto;
+        width: min(1120px, calc(100vw - 72px));
+        height: min(880px, calc(100vh - 58px));
+        transform: translate(-50%, -50%);
+        overflow: hidden;
+        border: 1px solid #dce5ee;
+        border-radius: 14px;
+        box-shadow: 0 25px 80px rgba(20,42,70,.34);
+      }
+      .wizard.dragging {
+        user-select: none;
+        box-shadow: 0 30px 90px rgba(20,42,70,.42);
+      }
+      .wiz-head {
+        cursor: move;
+        user-select: none;
+      }
+      .wiz-head .close,
+      .wiz-head button,
+      .wiz-head input,
+      .wiz-head select {
+        cursor: pointer;
+      }
+      .drag-hint {
+        margin-left: 12px;
+        padding: 4px 8px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        color: #8795a7;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .task-name-panel {
+        display: grid;
+        grid-template-columns: 150px minmax(0,1fr) auto;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+        padding: 13px 15px;
+        border: 1px solid #dce8f5;
+        border-radius: 9px;
+        background: linear-gradient(90deg,#f5f9ff,#fff);
+      }
+      .task-name-panel label {
+        color: #345a7e;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .task-name-panel input {
+        width: 100%;
+        height: 36px;
+        border: 1px solid #cfddea;
+        border-radius: 6px;
+        padding: 0 10px;
+        color: #334c65;
+        background: #fff;
+      }
+      .task-name-panel small {
+        color: #8493a6;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .summary-item.editable-task-name {
+        grid-column: span 2;
+      }
+      .summary-item.editable-task-name input {
+        width: 100%;
+        height: 35px;
+        border: 1px solid #d7e1eb;
+        border-radius: 6px;
+        padding: 0 9px;
+        color: #334b63;
+        font-weight: 600;
+      }
+
+      /* 数据资源分层展示 */
+      .resource-category-grid {
+        display: grid;
+        grid-template-columns: repeat(5,minmax(150px,1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .resource-category-card {
+        position: relative;
+        min-height: 142px;
+        padding: 15px;
+        border: 1px solid #dfe7f0;
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .resource-category-card:hover,
+      .resource-category-card.active {
+        transform: translateY(-2px);
+        border-color: #83b2ea;
+        box-shadow: 0 10px 24px rgba(36,117,233,.11);
+      }
+      .resource-category-card.active {
+        background: #f2f7ff;
+      }
+      .resource-category-card .type-icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 9px;
+        font-size: 16px;
+      }
+      .resource-category-card h3 {
+        margin: 0;
+        color: #2e435b;
+        font-size: 14px;
+      }
+      .resource-category-card p {
+        margin: 5px 0 10px;
+        color: #8492a4;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .resource-category-meta {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 8px;
+        border-top: 1px solid #edf1f5;
+        color: #6f8195;
+        font-size: 11px;
+      }
+      .resource-layout {
+        display: grid;
+        grid-template-columns: 280px minmax(0,1fr);
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .resource-tree-card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+      }
+      .resource-tree-card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .resource-tree-row {
+        display: grid;
+        grid-template-columns: 22px 1fr auto;
+        gap: 7px;
+        align-items: center;
+        min-height: 38px;
+        padding: 7px 8px;
+        border-radius: 7px;
+        color: #5d7086;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .resource-tree-row:hover,
+      .resource-tree-row.active {
+        background: #eaf3ff;
+        color: #216fc9;
+      }
+      .resource-tree-row.child {
+        padding-left: 24px;
+      }
+      .resource-tree-row small {
+        color: #95a2b2;
+        font-size: 10px;
+      }
+      .storage-summary {
+        display: grid;
+        gap: 9px;
+        margin-top: 14px;
+        padding-top: 13px;
+        border-top: 1px solid #edf1f5;
+      }
+      .storage-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        font-size: 11px;
+      }
+      .storage-row b {
+        color: #3b546d;
+      }
+      .storage-row span {
+        color: #8b99aa;
+      }
+      .storage-bar {
+        grid-column: 1/-1;
+        height: 5px;
+        overflow: hidden;
+        border-radius: 5px;
+        background: #edf1f5;
+      }
+      .storage-bar i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg,#2b7ce5,#55a6f4);
+      }
+      .resource-table-shell {
+        min-width: 0;
+      }
+      .resource-table-shell .tablebox {
+        height: 100%;
+      }
+      .manage-task-card {
+        margin-top: 14px;
+      }
+      .manage-task-note {
+        padding: 10px 12px;
+        border: 1px solid #dce8f5;
+        border-radius: 8px;
+        background: #f6faff;
+        color: #60758c;
+        font-size: 12px;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      /* PS点匹配页面与任务 */
+      #matching {
+        min-height: calc(100vh - 112px);
+      }
+      #matching .match-layout {
+        grid-template-columns: minmax(0,1.65fr) minmax(360px,.95fr);
+      }
+      #matching .map {
+        height: 440px;
+      }
+      .matching-dashboard {
+        display: grid;
+        grid-template-columns: 1.25fr .75fr;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .match-task-list {
+        display: grid;
+        gap: 9px;
+      }
+      .match-task-row {
+        display: grid;
+        grid-template-columns: 36px minmax(0,1fr) 150px auto;
+        gap: 10px;
+        align-items: center;
+        padding: 11px 12px;
+        border: 1px solid #e6ecf3;
+        border-radius: 8px;
+        background: #fbfdff;
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .match-task-row:hover {
+        border-color: #9fc4ef;
+        background: #f5f9ff;
+      }
+      .match-task-row .type-icon {
+        width: 34px;
+        height: 34px;
+        margin: 0;
+        font-size: 16px;
+      }
+      .match-task-row b {
+        display: block;
+        font-size: 13px;
+      }
+      .match-task-row small {
+        display: block;
+        margin-top: 3px;
+        color: #8795a7;
+        font-size: 11px;
+      }
+      .match-task-progress {
+        display: grid;
+        grid-template-columns: 1fr 36px;
+        gap: 7px;
+        align-items: center;
+        color: #55728d;
+        font-size: 11px;
+      }
+      .match-quality-grid {
+        display: grid;
+        grid-template-columns: repeat(2,1fr);
+        gap: 9px;
+      }
+      .match-quality-item {
+        padding: 12px;
+        border: 1px solid #e7edf3;
+        border-radius: 8px;
+        background: #fbfdff;
+      }
+      .match-quality-item span {
+        display: block;
+        color: #8493a6;
+        font-size: 11px;
+      }
+      .match-quality-item b {
+        display: block;
+        margin-top: 5px;
+        color: #2d465f;
+        font-size: 18px;
+      }
+      .problem-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .problem-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 9px 10px;
+        border-radius: 7px;
+        background: #f7f9fc;
+        color: #607287;
+        font-size: 12px;
+      }
+      .matching-flow-card {
+        margin-top: 14px;
+      }
+      .matching-flow {
+        display: grid;
+        grid-template-columns: repeat(5,1fr);
+        gap: 10px;
+      }
+      .matching-flow .flow-node:not(:last-child):after {
+        right: -10px;
+      }
+      .match-modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .match-modal-grid .full {
+        grid-column: 1/-1;
+      }
+      .match-task-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      @media(max-width:1280px) {
+        .resource-category-grid {
+          grid-template-columns: repeat(3,1fr);
+        }
+        .matching-dashboard,
+        #matching .match-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media(max-width:900px) {
+        .resource-layout {
+          grid-template-columns: 1fr;
+        }
+        .resource-category-grid {
+          grid-template-columns: repeat(2,1fr);
+        }
+        .matching-flow {
+          grid-template-columns: 1fr 1fr;
+        }
+        .match-task-row {
+          grid-template-columns: 34px 1fr;
+        }
+        .match-task-row .match-task-progress,
+        .match-task-row > .tag {
+          grid-column: 2;
+        }
+        .task-name-panel {
+          grid-template-columns: 1fr;
+        }
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo" data-logo-src="./DataManagementSystem.svg">
+            <img id="platformLogo" src="./DataManagementSystem.svg" alt="平台 Logo">
+          </div>
+          <div><strong>住建系统-数据中台</strong><small>住房安全数据基础管理与共享平台</small></div>
+        </div>
+        <div class="menu">
+          <div class="menu-label">核心业务</div>
+          <div class="nav active" data-page="gather">
+            <i>⇩</i>
+            数据汇聚接入模块
+            <b>5</b>
+          </div>
+          <div class="nav" data-page="manage">
+            <i>▦</i>
+            数据管理模块
+          </div>
+          <div class="nav" data-page="matching">
+            <i>⌖</i>
+            PS点和房屋匹配模块
+          </div>
+          <div class="nav" data-page="audit">
+            <i>✓</i>
+            数据质量稽查模块
+            <b>12</b>
+          </div>
+          <div class="nav" data-page="archive">
+            <i>▤</i>
+            数据成果归档模块
+          </div>
+          <div class="menu-label">共享与支撑</div>
+          <div class="nav" data-page="share">
+            <i>⌘</i>
+            数据共享与接口模块
+          </div>
+          <div class="nav" data-page="metadata">
+            <i>≣</i>
+            元数据模块
+          </div>
+          <div class="nav" data-page="security">
+            <i>⚙</i>
+            系统权限与日志模块
+          </div>
+        </div>
+        <div class="side-foot">
+          <div class="avatar">管</div>
+          <div>
+            <strong>系统管理员</strong>
+            <small>绵阳市住房和城乡建设委员会</small>
+          </div>
+        </div>
+      </aside>
+      <div class="main">
+        <header class="top">
+          <h2 id="pageTitle">数据汇聚接入模块</h2>
+          <span class="crumb">首页 / 核心业务</span>
+          <input class="search" placeholder="搜索数据、任务或服务…">
+          <div class="top-actions">
+            <button class="topbtn" onclick="toast('帮助中心已打开（演示）')">帮助</button>
+            <button class="topbtn message-btn" id="messageBtn" onclick="toggleMessageCenter()">消息<span class="message-badge" id="messageBadge">3</span></button>
+          </div>
+        </header>
+        <div class="workspace">
+          <section class="page active" id="gather">
+            <div class="hero">
+              <div>
+                <h1>数据汇聚接入</h1>
+                <p>统一配置多源数据的来源目录、结构识别、目标资源目录、标准映射、质量规则与入库任务</p>
+              </div>
+              <button class="btn primary" onclick="openNewTaskSelector()">＋ 新建接入任务</button>
+            </div>
+            <div class="stats">
+              <div class="stat">
+                <label>已配置数据源</label>
+                <strong>26</strong>
+                <small>18个正常运行</small>
+              </div>
+              <div class="stat" style="--accent:#1ba7a0">
+                <label>今日接入数据</label>
+                <strong>186.4 GB</strong>
+                <small>较昨日 +12.6%</small>
+              </div>
+              <div class="stat" style="--accent:#e59a22">
+                <label>运行中任务</label>
+                <strong>7</strong>
+                <small>2个任务待确认</small>
+              </div>
+              <div class="stat" style="--accent:#28a96b">
+                <label>成功入库率</label>
+                <strong>98.6%</strong>
+                <small>近30日平均</small>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <h3>标准接入流程</h3>
+                <span>所有数据类型遵循统一工作流</span>
+              </div>
+              <div class="flow">
+                <div class="flow-node">
+                  <i>1</i>
+                  <b>配置数据源</b>
+                  <small>文件夹 / SFTP / API</small>
+                </div>
+                <div class="flow-node">
+                  <i>2</i>
+                  <b>扫描识别</b>
+                  <small>文件与元数据解析</small>
+                </div>
+                <div class="flow-node">
+                  <i>3</i>
+                  <b>选择资源目录</b>
+                  <small>目标库与目录层级</small>
+                </div>
+                <div class="flow-node">
+                  <i>4</i>
+                  <b>标准字段映射</b>
+                  <small>结构与坐标转换</small>
+                </div>
+                <div class="flow-node">
+                  <i>5</i>
+                  <b>质量检查</b>
+                  <small>规则与阈值配置</small>
+                </div>
+                <div class="flow-node">
+                  <i>6</i>
+                  <b>确认入库</b>
+                  <small>任务策略与归档</small>
+                </div>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="card">
+                <div class="card-head">
+                  <h3>选择接入数据类型</h3>
+                  <!-- <span>点击开始真实配置流程</span> -->
+                </div>
+                <div class="types" id="typeCards"></div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>最近接入任务</h3>
+                  <span class="link" onclick="openTaskCenter()">查看全部</span>
+                </div>
+                <div id="recentTaskList"></div>
+              </div>
+            </div>
+            <div class="gather-dashboard">
+              <div class="card">
+                <div class="card-head">
+                  <h3>接入任务运行监控</h3>
+                  <span class="link" onclick="openTaskCenter()">进入任务中心</span>
+                </div>
+                <div class="monitor-list" id="taskMonitorRows"></div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>数据源健康状态</h3>
+                  <span>最近检测 10:32</span>
+                </div>
+                <div class="health-list">
+                  <div class="health-item"><i class="health-icon">▰</i><div><b>本地共享目录</b><small>8个连接 · 平均响应 0.4s</small></div><span class="health-state">● 正常</span></div>
+                  <div class="health-item"><i class="health-icon">⇄</i><div><b>FTP / SFTP</b><small>6个连接 · 平均响应 1.2s</small></div><span class="health-state">● 正常</span></div>
+                  <div class="health-item"><i class="health-icon">☁</i><div><b>对象存储</b><small>5个Bucket · 容量使用 68%</small></div><span class="health-state">● 正常</span></div>
+                  <div class="health-item"><i class="health-icon">▥</i><div><b>空间数据库</b><small>4个实例 · 1个连接延迟偏高</small></div><span class="health-state warn">● 关注</span></div>
+                  <div class="health-item"><i class="health-icon">⌁</i><div><b>服务接口</b><small>3个接口 · 今日调用 12,680次</small></div><span class="health-state">● 正常</span></div>
+                </div>
+              </div>
+              <div class="card dashboard-span">
+                <div class="card-head">
+                  <h3>近7日数据接入趋势</h3>
+                  <span>统计口径：成功写入平台资源库的数据量</span>
+                </div>
+                <div class="trend-layout">
+                  <div class="trend-chart" aria-label="近7日接入数据量柱状图">
+                    <div class="trend-col"><div class="trend-bar" style="height:48%"><span>118GB</span></div><small>06-23</small></div>
+                    <div class="trend-col"><div class="trend-bar" style="height:62%"><span>146GB</span></div><small>06-24</small></div>
+                    <div class="trend-col"><div class="trend-bar" style="height:54%"><span>132GB</span></div><small>06-25</small></div>
+                    <div class="trend-col"><div class="trend-bar" style="height:76%"><span>178GB</span></div><small>06-26</small></div>
+                    <div class="trend-col"><div class="trend-bar" style="height:69%"><span>162GB</span></div><small>06-27</small></div>
+                    <div class="trend-col"><div class="trend-bar" style="height:91%"><span>214GB</span></div><small>06-28</small></div>
+                    <div class="trend-col"><div class="trend-bar" style="height:79%"><span>186GB</span></div><small>06-29</small></div>
+                  </div>
+                  <div class="trend-summary">
+                    <div class="trend-metric"><span>累计接入</span><b>1.14 TB</b><small>较上周 +16.8%</small></div>
+                    <div class="trend-metric"><span>平均任务耗时</span><b>18分26秒</b><small>较上周缩短 2分14秒</small></div>
+                    <div class="trend-metric"><span>异常数据组</span><b>12 组</b><small style="color:#e59a22">其中5组待人工处理</small></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="page" id="manage">
+            <div class="hero">
+              <div>
+                <h1>数据资源管理</h1>
+                <p>按照卫星SAR、光学影像、房屋基础、建筑变化和InSAR形变五类数据组织资源目录、物理存储、版本及接入任务</p>
+              </div>
+              <div>
+                <button class="btn" onclick="toast('已切换为数据空间浏览模式（演示）')">地图模式</button>
+                <button class="btn primary" onclick="toast('已打开新建资源目录面板（演示）')">＋ 新建资源目录</button>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat">
+                <label>资源目录</label>
+                <strong>128</strong>
+                <small>5类核心数据资源</small>
+              </div>
+              <div class="stat" style="--accent:#1ba7a0">
+                <label>数据集</label>
+                <strong id="resourceDatasetCount">2,486</strong>
+                <small>本月新增 126</small>
+              </div>
+              <div class="stat" style="--accent:#e59a22">
+                <label>接入任务</label>
+                <strong id="manageTaskCount">5</strong>
+                <small>运行中任务同步展示</small>
+              </div>
+              <div class="stat" style="--accent:#28a96b">
+                <label>存储占用</label>
+                <strong>18.72 TB</strong>
+                <small>在线存储使用率31.2%</small>
+              </div>
+            </div>
+
+            <div class="resource-category-grid" id="resourceCategoryGrid"></div>
+
+            <div class="resource-layout">
+              <div class="resource-tree-card">
+                <h3>数据存储目录结构</h3>
+                <div class="resource-tree-row active" data-resource-type="ALL" onclick="selectResourceType('ALL')"><span>▾</span><b>全部数据资源</b><small>2,486</small></div>
+                <div class="resource-tree-row child" data-resource-type="SAR" onclick="selectResourceType('SAR')"><span>▣</span><b>卫星 SAR 数据</b><small>486</small></div>
+                <div class="resource-tree-row child" data-resource-type="OPT" onclick="selectResourceType('OPT')"><span>▧</span><b>高分辨率光学影像</b><small>362</small></div>
+                <div class="resource-tree-row child" data-resource-type="BLD" onclick="selectResourceType('BLD')"><span>⌂</span><b>房屋基础数据</b><small>1,084</small></div>
+                <div class="resource-tree-row child" data-resource-type="CHANGE" onclick="selectResourceType('CHANGE')"><span>◩</span><b>建筑物变化图斑</b><small>248</small></div>
+                <div class="resource-tree-row child" data-resource-type="INSAR" onclick="selectResourceType('INSAR')"><span>⌁</span><b>InSAR 形变结果</b><small>306</small></div>
+                <div class="storage-summary">
+                  <div class="storage-row"><b>高性能在线存储</b><span>8.6 / 50 TB</span><div class="storage-bar"><i style="width:17.2%"></i></div></div>
+                  <div class="storage-row"><b>遥感对象存储池</b><span>10.1 / 40 TB</span><div class="storage-bar"><i style="width:25.3%"></i></div></div>
+                  <div class="storage-row"><b>历史归档存储</b><span>0.02 / 10 TB</span><div class="storage-bar"><i style="width:2%"></i></div></div>
+                </div>
+              </div>
+              <div class="resource-table-shell">
+                <div class="tablebox">
+                  <div class="toolbar">
+                    <input id="resourceSearch" placeholder="资源名称 / 编码 / 责任单位" oninput="renderResourceTable()">
+                    <select id="resourceTypeFilter" onchange="selectResourceType(this.value)">
+                      <option value="ALL">全部数据类型</option>
+                      <option value="SAR">卫星 SAR 数据</option>
+                      <option value="OPT">高分辨率光学影像</option>
+                      <option value="BLD">房屋基础数据</option>
+                      <option value="CHANGE">建筑物变化图斑</option>
+                      <option value="INSAR">InSAR 形变结果</option>
+                    </select>
+                    <select id="resourceRegionFilter" onchange="renderResourceTable()"><option>全部行政区</option><option>绵阳市全域</option><option>涪城区</option><option>游仙区</option><option>主城区</option></select>
+                    <div class="spacer"></div>
+                    <button class="btn" onclick="toast('已生成所选资源导出清单（演示）')">批量导出</button>
+                    <button class="btn" onclick="toast('列设置面板已打开（演示）')">列设置</button>
+                  </div>
+                  <table>
+                    <thead><tr><th>资源名称</th><th>存储目录</th><th>数据类型</th><th>空间范围</th><th>版本</th><th>质量</th><th>更新时间</th><th>操作</th></tr></thead>
+                    <tbody id="resourceTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card manage-task-card">
+              <div class="card-head"><h3>数据接入任务</h3><span class="link" onclick="showPage('gather')">返回数据汇聚接入</span></div>
+              <div class="manage-task-note">接入任务创建后会同步出现在数据管理模块；任务完成后，系统自动生成对应数据资源、版本信息、元数据和存储目录记录。</div>
+              <div class="monitor-list" id="manageTaskRows"></div>
+            </div>
+          </section>
+          <section class="page" id="matching">
+            <div class="hero">
+              <div>
+                <h1>PS点和房屋匹配</h1>
+                <p>配置PS点与房屋面的空间匹配策略，创建匹配任务并全过程查看执行进度、结果质量和未匹配问题对象</p>
+              </div>
+              <button class="btn primary" onclick="openMatchTaskModal()">＋ 新建匹配任务</button>
+            </div>
+            <div class="stats">
+              <div class="stat"><label>有效PS点</label><strong>1,256,890</strong><small>相干系数≥0.6</small></div>
+              <div class="stat"><label>已匹配PS点</label><strong>1,050,671</strong><small>匹配率83.59%</small></div>
+              <div class="stat" style="--accent:#e59a22"><label>未匹配PS点</label><strong>206,219</strong><small>需复核13,862点</small></div>
+              <div class="stat"><label>有PS点房屋</label><strong>312,648</strong><small>房屋覆盖率72.4%</small></div>
+            </div>
+            <div class="match-layout">
+              <div class="map real-map" id="matchMapCard">
+                <div class="leaflet-map-host" id="matchMap"></div>
+                <div class="map-loading" id="matchMapLoading">正在加载真实卫星影像与校准建筑轮廓…</div>
+                <div class="map-badge">绵阳市 · 涪城区建筑示范区<br><b>数据集</b>：PSInSAR_202606_Batch03<br><b>轮廓</b>：按卫星影像屋顶边缘校准</div>
+                <div class="map-legend"><span style="color:#e8791a">● 已匹配PS点</span><span style="color:#8bc34a">● 未匹配PS点</span><span style="color:#2b6bff">□ 实际房屋轮廓</span></div>
+              </div>
+              <div class="sidepanel">
+                <h3>匹配规则配置</h3>
+                <div class="field"><label>PS点成果数据集</label><select id="quickMatchPs"><option>PSInSAR_202606_Batch03</option><option>SBAS_202606_Batch02</option></select></div>
+                <div class="field"><label>目标房屋图层</label><select id="quickMatchBuilding"><option>绵阳市房屋建筑实际轮廓_示范区</option><option>涪城区房屋基础面_2026Q2</option></select></div>
+                <div class="field"><label>匹配方式</label><select id="quickMatchMethod"><option>面内优先 + 边界缓冲</option><option>仅房屋面内</option><option>最近邻自动归属</option></select></div>
+                <div class="field"><label>房屋边界缓冲距离（米）</label><input id="quickMatchBuffer" value="3.0"></div>
+                <div class="field"><label>单栋房屋最少PS点数</label><input id="quickMatchMin" value="1"></div>
+                <div class="switch-row"><span>排除低相干性PS点</span><i class="switch"></i></div>
+                <div class="switch-row"><span>按最近房屋自动归属</span><i class="switch"></i></div>
+                <button class="btn primary" style="width:100%;margin-top:10px" onclick="openMatchTaskModal(true)">▶ 创建并执行匹配任务</button>
+              </div>
+            </div>
+
+            <div class="matching-dashboard">
+              <div class="card">
+                <div class="card-head"><h3>匹配任务运行情况</h3><span>点击任务查看执行详情</span></div>
+                <div class="match-task-list" id="matchTaskList"></div>
+              </div>
+              <div class="card">
+                <div class="card-head"><h3>匹配结果质量概览</h3><span>最近一次任务</span></div>
+                <div class="match-quality-grid">
+                  <div class="match-quality-item"><span>面内直接匹配</span><b>78.24%</b></div>
+                  <div class="match-quality-item"><span>缓冲区补充匹配</span><b>5.35%</b></div>
+                  <div class="match-quality-item"><span>低相干点剔除</span><b>42,618</b></div>
+                  <div class="match-quality-item"><span>待人工复核</span><b>13,862</b></div>
+                </div>
+                <div class="problem-list">
+                  <div class="problem-row"><span>落在道路、绿地或公共空间</span><b>86,420点</b></div>
+                  <div class="problem-row"><span>房屋轮廓缺失或偏移</span><b>64,183点</b></div>
+                  <div class="problem-row"><span>边界缓冲范围内多房屋冲突</span><b>41,754点</b></div>
+                  <div class="problem-row"><span>其他需人工复核对象</span><b>13,862点</b></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card matching-flow-card">
+              <div class="card-head"><h3>PS点与房屋匹配处理流程</h3><span>任务配置、执行、复核和成果入库形成闭环</span></div>
+              <div class="matching-flow">
+                <div class="flow-node"><i>1</i><b>选择数据集</b><small>PS点成果与房屋图层</small></div>
+                <div class="flow-node"><i>2</i><b>配置匹配规则</b><small>面内、缓冲与最近邻</small></div>
+                <div class="flow-node"><i>3</i><b>执行空间匹配</b><small>批量计算归属关系</small></div>
+                <div class="flow-node"><i>4</i><b>问题对象复核</b><small>未匹配与冲突对象校核</small></div>
+                <div class="flow-node"><i>5</i><b>成果入库</b><small>写入关联表与匹配日志</small></div>
+              </div>
+            </div>
+          </section>
+          <section class="page" id="audit">
+            <div class="hero">
+              <div>
+                <h1>数据质量稽查</h1>
+                <p>通过可配置规则演示拓扑、闭合、冗余缺失、PS点密度及落图率问题结果</p>
+              </div>
+              <div>
+                <button class="btn">规则库</button>
+                <button class="btn primary" onclick="simulateAudit()">▶ 模拟执行稽查</button>
+              </div>
+            </div>
+            <div class="audit-grid">
+              <div class="rules">
+                <h3>专项检查规则</h3>
+                <div class="rule active" data-rule="房屋面拓扑一致性">▱ 房屋面拓扑一致性</div>
+                <div class="rule" data-rule="房屋面图形闭合性">◇ 房屋面图形闭合性</div>
+                <div class="rule" data-rule="数据冗余与缺失">▤ 数据冗余与缺失</div>
+                <div class="rule" data-rule="PS点分布密度">∴ PS点分布密度</div>
+                <div class="rule" data-rule="PS点落图率专项">⌖ PS点落图率专项</div>
+              </div>
+              <div class="audit-main">
+                <div class="map">
+                  <div class="road"></div>
+                  <div class="house" style="left:85px;top:65px;width:110px;height:75px"></div>
+                  <div class="house" style="left:168px;top:88px;width:112px;height:78px"></div>
+                  <div class="house" style="left:315px;top:220px;width:95px;height:70px"></div>
+                  <div class="error-area"></div>
+                  <div class="map-legend">
+                    <span style="color:#e85555">■ 重叠错误</span>
+                    <span style="color:#e59a22">■ 缝隙问题</span>
+                    <span style="color:#2475e9">□ 房屋面</span>
+                  </div>
+                </div>
+                <div class="sidepanel">
+                  <h3 id="auditTitle">房屋面拓扑一致性 · 参数</h3>
+                  <div class="field">
+                    <label>重叠面积容差（㎡）</label>
+                    <input value="0.50">
+                  </div>
+                  <div class="field">
+                    <label>重叠比例阈值（%）</label>
+                    <input value="2.00">
+                  </div>
+                  <div class="field">
+                    <label>最小缝隙面积（㎡）</label>
+                    <input value="1.00">
+                  </div>
+                  <div class="field">
+                    <label>问题等级</label>
+                    <select><option>严重 · 阻断入库</option><option>一般 · 允许告警</option></select>
+                  </div>
+                  <div class="switch-row">
+                    <span>检查重叠</span>
+                    <i class="switch"></i>
+                  </div>
+                  <div class="switch-row">
+                    <span>检查异常缝隙</span>
+                    <i class="switch"></i>
+                  </div>
+                  <button class="btn primary" style="width:100%;margin-top:8px" onclick="toast(&#x27;规则参数已保存&#x27;)">保存规则配置</button>
+                </div>
+                <div class="result-row">
+                  <div class="mini">
+                    <span>检查对象</span>
+                    <b>42,680</b>
+                  </div>
+                  <div class="mini">
+                    <span>发现问题</span>
+                    <b style="color:#e85555">127</b>
+                  </div>
+                  <div class="mini">
+                    <span>严重 / 一般</span>
+                    <b>8 / 119</b>
+                  </div>
+                  <div class="mini">
+                    <span>质量得分</span>
+                    <b style="color:#e59a22">78.5</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="page" id="archive">
+            <div class="hero">
+              <div>
+                <h1>数据成果归档</h1>
+                <p>对已完成接入、质检和发布的数据成果进行归档包配置、版本固化与生命周期管理</p>
+              </div>
+              <button class="btn primary" onclick="toast(&#x27;已打开成果归档向导&#x27;)">＋ 创建归档任务</button>
+            </div>
+            <div class="stats">
+              <div class="stat">
+                <label>归档成果包</label>
+                <strong>1,862</strong>
+                <small>本月新增42</small>
+              </div>
+              <div class="stat">
+                <label>归档容量</label>
+                <strong>14.36 TB</strong>
+                <small>长期存储正常</small>
+              </div>
+              <div class="stat">
+                <label>待归档成果</label>
+                <strong>18</strong>
+                <small>今日到期3项</small>
+              </div>
+              <div class="stat">
+                <label>归档完整率</label>
+                <strong>99.8%</strong>
+                <small>元数据齐全</small>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="tablebox">
+                <div class="toolbar">
+                  <input placeholder="成果包名称 / 归档编号">
+                  <select><option>全部归档类型</option></select>
+                  <div class="spacer"></div>
+                  <button class="btn">归档策略</button>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>成果包名称</th>
+                      <th>归档编号</th>
+                      <th>版本</th>
+                      <th>容量</th>
+                      <th>保管期限</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>2026年6月SAR监测成果包</td>
+                      <td>ARC-SAR-202606-04</td>
+                      <td>V1.0</td>
+                      <td>86.4GB</td>
+                      <td>长期</td>
+                      <td><span class="tag">已归档</span></td>
+                      <td><span class="link">校验</span><span class="link">清单</span></td>
+                    </tr>
+                    <tr>
+                      <td>涪城区房屋基础数据成果包</td>
+                      <td>ARC-BLD-FC-26Q2</td>
+                      <td>V3.2</td>
+                      <td>2.8GB</td>
+                      <td>10年</td>
+                      <td><span class="tag warn">待确认</span></td>
+                      <td><span class="link">确认</span><span class="link">清单</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h3>最近归档活动</h3>
+                  <span>归档审计链</span>
+                </div>
+                <div class="timeline">
+                  <div class="event">
+                    <b>归档完整性校验通过</b>
+                    <p>ARC-SAR-202606-04 · 10:32 · 系统自动</p>
+                  </div>
+                  <div class="event">
+                    <b>生成归档清单和校验码</b>
+                    <p>包含影像8景、元数据8份、质检报告1份</p>
+                  </div>
+                  <div class="event">
+                    <b>归档包写入长期存储</b>
+                    <p>对象存储 /archive/2026/SAR/06</p>
+                  </div>
+                  <div class="event">
+                    <b>成果版本已固化</b>
+                    <p>版本V1.0，不允许直接覆盖更新</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="page" id="share">
+            <div class="hero">
+              <div>
+                <h1>数据共享与接口</h1>
+                <p>面向房屋风险分析及预警系统发布数据服务、接口凭证和定向推送任务</p>
+              </div>
+              <button class="btn primary" onclick="toast(&#x27;已打开接口发布配置&#x27;)">＋ 发布数据服务</button>
+            </div>
+            <div class="stats">
+              <div class="stat">
+                <label>已发布接口</label>
+                <strong>38</strong>
+                <small>36个运行正常</small>
+              </div>
+              <div class="stat">
+                <label>今日调用</label>
+                <strong>12,846</strong>
+                <small>较昨日 +8.3%</small>
+              </div>
+              <div class="stat">
+                <label>授权应用</label>
+                <strong>7</strong>
+                <small>2个核心业务系统</small>
+              </div>
+              <div class="stat">
+                <label>接口可用率</label>
+                <strong>99.92%</strong>
+                <small>近30日</small>
+              </div>
+            </div>
+            <div class="tablebox">
+              <div class="toolbar">
+                <input placeholder="接口名称 / 编码">
+                <select><option>全部服务类型</option><option>REST API</option><option>WMS / WFS</option></select>
+                <div class="spacer"></div>
+                <button class="btn">调用监控</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>接口名称</th>
+                    <th>服务类型</th>
+                    <th>资源目录</th>
+                    <th>授权对象</th>
+                    <th>今日调用</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>房屋建筑轮廓查询服务</td>
+                    <td>REST API / WFS</td>
+                    <td>房屋基础数据</td>
+                    <td>风险分析系统</td>
+                    <td>6,821</td>
+                    <td><span class="tag">运行中</span></td>
+                    <td><span class="link">文档</span><span class="link">授权</span><span class="link">监控</span></td>
+                  </tr>
+                  <tr>
+                    <td>PS-InSAR形变结果服务</td>
+                    <td>REST API / WMS</td>
+                    <td>形变成果</td>
+                    <td>风险预警系统</td>
+                    <td>4,258</td>
+                    <td><span class="tag">运行中</span></td>
+                    <td><span class="link">文档</span><span class="link">凭证</span><span class="link">监控</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section class="page" id="metadata">
+            <div class="hero">
+              <div>
+                <h1>元数据</h1>
+                <p>维护遥感影像、房屋数据和形变成果的标准元数据模板、字段字典与完整性状态</p>
+              </div>
+              <button class="btn primary">＋ 新建元数据模板</button>
+            </div>
+            <div class="module-grid">
+              <div class="module-card">
+                <div class="type-icon">◫</div>
+                <h3>SAR影像元数据模板</h3>
+                <p>卫星、传感器、轨道、极化方式、成像模式、获取时间、入射角、空间范围</p>
+                <span class="link">编辑模板 →</span>
+              </div>
+              <div class="module-card">
+                <div class="type-icon">▧</div>
+                <h3>光学影像元数据模板</h3>
+                <p>卫星、波段、分辨率、云量、太阳高度角、产品级别及正射状态</p>
+                <span class="link">编辑模板 →</span>
+              </div>
+              <div class="module-card">
+                <div class="type-icon">⌂</div>
+                <h3>房屋基础元数据模板</h3>
+                <p>图层、坐标系、行政区划、责任单位、数据时相、属性字典及版本</p>
+                <span class="link">编辑模板 →</span>
+              </div>
+              <div class="module-card">
+                <div class="type-icon">⌁</div>
+                <h3>InSAR成果元数据模板</h3>
+                <p>处理方法、升降轨、LOS方向、形变单位、观测时段、处理批次及精度</p>
+                <span class="link">编辑模板 →</span>
+              </div>
+            </div>
+            <div class="tablebox" style="margin-top:14px">
+              <div class="toolbar">
+                <input placeholder="数据资源 / 元数据编号">
+                <select><option>全部完整性</option><option>完整</option><option>缺失</option></select>
+                <div class="spacer"></div>
+                <button class="btn">批量补录</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>数据资源</th>
+                    <th>元数据编号</th>
+                    <th>模板</th>
+                    <th>字段完整率</th>
+                    <th>缺失字段</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>GF3_绵阳_20260628</td>
+                    <td>MD-SAR-260628-003</td>
+                    <td>SAR标准模板V2.1</td>
+                    <td>100%</td>
+                    <td>—</td>
+                    <td>2026-06-29</td>
+                    <td><span class="link">查看</span><span class="link">导出</span></td>
+                  </tr>
+                  <tr>
+                    <td>涪城区房屋基础数据</td>
+                    <td>MD-BLD-FC-26Q2</td>
+                    <td>房屋数据模板V3.0</td>
+                    <td>92%</td>
+                    <td>责任人、采集方式</td>
+                    <td>2026-06-28</td>
+                    <td><span class="link">补录</span><span class="link">校验</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section class="page" id="security">
+            <div class="hero">
+              <div>
+                <h1>系统权限与日志</h1>
+                <p>统一管理用户、角色、数据权限、接口授权及全流程操作审计日志</p>
+              </div>
+              <button class="btn primary">＋ 新增用户</button>
+            </div>
+            <div class="module-grid">
+              <div class="module-card">
+                <div class="type-icon">♙</div>
+                <h3>用户与组织</h3>
+                <p>用户账号、所属单位、账号状态与有效期限管理</p>
+                <span class="link">128个用户 →</span>
+              </div>
+              <div class="module-card">
+                <div class="type-icon">♜</div>
+                <h3>角色与菜单权限</h3>
+                <p>平台管理员、数据管理员、质检员和服务使用者角色</p>
+                <span class="link">12个角色 →</span>
+              </div>
+              <div class="module-card">
+                <div class="type-icon">🔐</div>
+                <h3>数据与接口权限</h3>
+                <p>按目录、行政区、密级、服务接口配置访问范围</p>
+                <span class="link">配置策略 →</span>
+              </div>
+              <div class="module-card">
+                <div class="type-icon">≡</div>
+                <h3>操作审计</h3>
+                <p>接入、编辑、删除、下载、授权及接口调用留痕</p>
+                <span class="link">查看日志 →</span>
+              </div>
+            </div>
+            <div class="tablebox" style="margin-top:14px">
+              <div class="toolbar">
+                <input placeholder="操作人 / 资源 / IP地址">
+                <select><option>全部操作类型</option><option>数据接入</option><option>资源删除</option><option>权限变更</option></select>
+                <div class="spacer"></div>
+                <button class="btn">导出日志</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>操作人</th>
+                    <th>所属单位</th>
+                    <th>操作类型</th>
+                    <th>操作对象</th>
+                    <th>结果</th>
+                    <th>客户端IP</th>
+                    <th>详情</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2026-06-29 10:32:18</td>
+                    <td>张明</td>
+                    <td>数据中心</td>
+                    <td>数据接入</td>
+                    <td>GF3_绵阳_20260628</td>
+                    <td><span class="tag">成功</span></td>
+                    <td>10.16.8.21</td>
+                    <td><span class="link">查看</span></td>
+                  </tr>
+                  <tr>
+                    <td>2026-06-29 09:58:42</td>
+                    <td>李敏</td>
+                    <td>质检中心</td>
+                    <td>规则修改</td>
+                    <td>房屋面拓扑一致性</td>
+                    <td><span class="tag">成功</span></td>
+                    <td>10.16.8.35</td>
+                    <td><span class="link">查看</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="soft-backdrop" id="messageBackdrop" onclick="closeMessageCenter()"></div>
+    <aside class="message-drawer" id="messageDrawer" aria-label="消息中心">
+      <div class="drawer-head" id="messageDrawerHead"></div>
+      <div id="messageDrawerBody" class="message-list"></div>
+    </aside>
+
+    <div class="overlay-panel" id="typeSelector" onclick="if(event.target===this)closeTypeSelector()">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="type-icon">＋</div>
+          <div><h2>新建数据接入任务</h2><p>请先选择本次接入的数据类型，再进入对应的六步配置流程。</p></div>
+          <div class="spacer"></div>
+          <button class="close" onclick="closeTypeSelector()">✕</button>
+        </div>
+        <div class="modal-body"><div class="type-picker-grid" id="typePickerGrid"></div></div>
+      </div>
+    </div>
+
+    <div class="overlay-panel" id="taskDetailOverlay" onclick="if(event.target===this)closeTaskDetail()">
+      <div class="task-drawer">
+        <div class="modal-head">
+          <div class="type-icon" id="taskDetailIcon">◫</div>
+          <div><h2 id="taskDetailTitle">接入任务详情</h2><p id="taskDetailSubtitle">查看数据汇聚全流程执行状态</p></div>
+          <div class="spacer"></div>
+          <button class="close" onclick="closeTaskDetail()">✕</button>
+        </div>
+        <div class="task-detail-body" id="taskDetailBody"></div>
+      </div>
+    </div>
+
+    <div class="overlay-panel" id="taskCenterOverlay" onclick="if(event.target===this)closeTaskCenter()">
+      <div class="modal-card small">
+        <div class="modal-head">
+          <div class="type-icon">≣</div>
+          <div><h2>数据接入任务中心</h2><p>统一查看全部任务、执行进度与异常状态。</p></div>
+          <div class="spacer"></div>
+          <button class="close" onclick="closeTaskCenter()">✕</button>
+        </div>
+        <div class="modal-body"><div class="monitor-list" id="taskCenterList"></div></div>
+      </div>
+    </div>
+
+
+    <div class="overlay-panel" id="matchTaskOverlay" onclick="if(event.target===this)closeMatchTaskModal()">
+      <div class="modal-card small">
+        <div class="modal-head">
+          <div class="type-icon">⌖</div>
+          <div><h2>新建PS点和房屋匹配任务</h2><p>配置任务名称、输入数据与匹配规则，提交后进入匹配任务队列。</p></div>
+          <div class="spacer"></div>
+          <button class="close" onclick="closeMatchTaskModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="match-modal-grid">
+            <div class="field full"><label>任务名称</label><input id="matchTaskName" placeholder="请输入任务名称"></div>
+            <div class="field"><label>PS点成果数据集</label><select id="matchTaskPs"><option>PSInSAR_202606_Batch03</option><option>SBAS_202606_Batch02</option></select></div>
+            <div class="field"><label>目标房屋图层</label><select id="matchTaskBuilding"><option>绵阳市房屋建筑实际轮廓_示范区</option><option>涪城区房屋基础面_2026Q2</option></select></div>
+            <div class="field"><label>匹配方式</label><select id="matchTaskMethod"><option>面内优先 + 边界缓冲</option><option>仅房屋面内</option><option>最近邻自动归属</option></select></div>
+            <div class="field"><label>边界缓冲距离（米）</label><input id="matchTaskBuffer" value="3.0"></div>
+            <div class="field"><label>单栋房屋最少PS点数</label><input id="matchTaskMin" value="1"></div>
+            <div class="field"><label>执行方式</label><select id="matchTaskRunMode"><option>立即执行</option><option>保存为草稿</option><option>定时执行</option></select></div>
+          </div>
+          <div class="notice">任务提交后将依次执行数据检查、空间索引构建、面内匹配、缓冲区补充匹配、冲突复核和匹配成果入库。</div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" onclick="closeMatchTaskModal()">取消</button><button class="btn primary" onclick="createMatchTaskFromModal()">创建并执行</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay-panel" id="matchTaskDetailOverlay" onclick="if(event.target===this)closeMatchTaskDetail()">
+      <div class="modal-card small">
+        <div class="modal-head">
+          <div class="type-icon">⌖</div>
+          <div><h2 id="matchTaskDetailTitle">匹配任务详情</h2><p id="matchTaskDetailSub">查看匹配全过程状态</p></div>
+          <div class="spacer"></div>
+          <button class="close" onclick="closeMatchTaskDetail()">✕</button>
+        </div>
+        <div class="modal-body" id="matchTaskDetailBody"></div>
+      </div>
+    </div>
+
+    <input class="hidden-picker" id="directoryPicker" type="file" webkitdirectory multiple onchange="handleDirectorySelection(this)">
+
+    <div class="mask" id="mask" onclick="if(event.target===this)closeWizard()">
+      <div class="wizard">
+        <div class="wiz-head">
+          <div class="type-icon" id="wizIcon">◫</div>
+          <div>
+            <h2 id="wizTitle">卫星SAR数据接入配置</h2>
+            <small id="wizSub">任务编号自动生成 · 配置将保存至接入任务库</small>
+          </div>
+          <span class="drag-hint">按住标题栏可自由拖动</span>
+          <button class="close" onclick="closeWizard()">✕</button>
+        </div>
+        <div class="wiz-steps" id="wizSteps"></div>
+        <div class="wiz-body" id="wizBody"></div>
+        <div class="wiz-foot">
+          <div class="left" id="stepTip">步骤 1 / 6</div>
+          <div class="right">
+            <button class="btn" onclick="saveDraft()">保存草稿</button>
+            <button class="btn" id="prevBtn" onclick="prevStep()">上一步</button>
+            <button class="btn primary" id="nextBtn" onclick="nextStep()">下一步</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      var APP_CONFIG= {
+        // 默认读取与当前 HTML 同目录下的 SVG；也可通过 ?logo=./xxx.svg 临时切换。
+        logoSrc:"./DataManagementSystem.svg"
+      };
+      function initLogo() {
+        var logo=document.getElementById("platformLogo");
+        if(!logo) return;
+        var params=new URLSearchParams(window.location.search);
+        var src=params.get("logo") || APP_CONFIG.logoSrc || logo.parentElement.dataset.logoSrc;
+        logo.src=src;
+      }
+      initLogo();
+      var DATA= {
+        SAR: {
+          name:"卫星 SAR 数据",
+          icon:"◫",
+          desc:"Sentinel-1、高分三号等SAR影像、元数据与辅助轨道文件",
+          pattern:"*.tif;*.xml;*.safe;*.eof",
+          source:"D:\\遥感数据\\SAR\\GF3\\202606",
+          catalog:"遥感影像 / SAR / 高分三号 / 2026年 / 06月",
+          special:"极化方式：VV+VH；轨道方向：升轨；产品级别：L2"
+        },
+        OPT: {
+          name:"高分辨率光学影像",
+          icon:"▧",
+          desc:"全色、多光谱、正射影像及配套元数据",
+          pattern:"*.tif;*.rpc;*.xml",
+          source:"D:\\遥感数据\\光学影像\\GF2\\202606",
+          catalog:"遥感影像 / 高分光学 / 高分二号 / 2026年",
+          special:"最大云量：10%；分辨率：≤1m；产品级别：L2"
+        },
+        BLD: {
+          name:"房屋基础数据",
+          icon:"⌂",
+          desc:"SHP、FileGDB、GeoJSON、CAD、Excel等多格式房屋数据",
+          pattern:"*.shp;*.gdb;*.geojson;*.dwg;*.xlsx",
+          source:"D:\\住建数据\\房屋基础\\2026Q2",
+          catalog:"房屋基础数据 / 涪城区 / 2026年第二季度",
+          special:"几何类型：面；唯一编码：BUILD_ID；坐标系：CGCS2000"
+        },
+        CHANGE: {
+          name:"建筑物变化图斑",
+          icon:"◩",
+          desc:"新增、拆除、扩建和疑似变化图斑成果",
+          pattern:"*.shp;*.gdb;*.geojson",
+          source:"D:\\变化监测\\图斑\\202606",
+          catalog:"变化监测成果 / 2026年 / 06月",
+          special:"变化类型字段：CHANGE_TYPE；置信度：≥0.70"
+        },
+        INSAR: {
+          name:"InSAR 形变结果",
+          icon:"⌁",
+          desc:"PS/SBAS点成果、形变栅格和时间序列表",
+          pattern:"*.shp;*.csv;*.tif;*.gpkg",
+          source:"D:\\InSAR成果\\PS\\202606",
+          catalog:"形变监测成果 / PS-InSAR / 2026年 / 06月",
+          special:"速率字段：VEL_MM_YR；相干性：COHERENCE；单位：mm/年"
+        }
+      };
+
+      var TASKS=[
+        {id:"IMP-SAR-20260629-004",type:"SAR",name:"GF-3 SAR影像 · 2026年6月第4批",source:"SFTP /data/sar/gf3/202606",time:"10:18",progress:100,status:"已入库",stage:"资源入库完成",size:"8.42 GB",records:"8组数据",owner:"遥感数据生产单位",started:"2026-06-29 09:56",logs:["09:56:08 已读取SFTP连接配置","10:02:16 完成28个文件扫描与分组","10:08:42 字段和坐标标准化完成","10:14:05 质量检查通过","10:18:26 资源入库及元数据登记完成"]},
+        {id:"IMP-BLD-20260629-011",type:"BLD",name:"涪城区房屋基础数据更新",source:"FileGDB · 42,680个对象",time:"09:42",progress:72,status:"质检中",stage:"执行质量规则",size:"2.86 GB",records:"42,680个对象",owner:"绵阳市住建数据中心",started:"2026-06-29 09:24",logs:["09:24:13 已建立共享目录连接","09:28:50 完成FileGDB结构识别","09:34:12 完成资源目录和字段映射","09:42:07 正在执行拓扑与必填字段检查"]},
+        {id:"IMP-INSAR-20260629-007",type:"INSAR",name:"PS-InSAR形变成果接入",source:"CSV + SHP · 1,256,890点",time:"08:30",progress:46,status:"待整改",stage:"字段映射待确认",size:"6.15 GB",records:"1,256,890个PS点",owner:"项目承建单位",started:"2026-06-29 08:12",logs:["08:12:20 完成目录连接","08:18:36 识别CSV、SHP与时序文件","08:26:14 检测到3个必填字段未匹配","08:30:05 任务暂停，等待人工确认字段映射"]},
+        {id:"IMP-OPT-20260629-003",type:"OPT",name:"高分二号正射影像接入",source:"对象存储 · optical/2026/06",time:"07:48",progress:88,status:"入库中",stage:"写入资源库",size:"12.76 GB",records:"12景影像",owner:"遥感数据生产单位",started:"2026-06-29 07:21",logs:["07:21:41 对象存储连接成功","07:29:18 完成12景影像扫描","07:36:22 云量和空间覆盖率检查通过","07:48:10 正在写入影像资源库"]},
+        {id:"IMP-CHANGE-20260628-019",type:"CHANGE",name:"建筑变化图斑月度成果",source:"PostGIS · change_result_202606",time:"昨日 18:36",progress:100,status:"已入库",stage:"资源入库完成",size:"684 MB",records:"3,862个图斑",owner:"项目承建单位",started:"2026-06-28 18:12",logs:["18:12:03 数据库连接成功","18:18:40 完成空间数据读取","18:25:17 几何合法性检查通过","18:36:24 资源入库完成"]}
+      ];
+
+      var RESOURCE_DATA=[
+        {id:"RES-SAR-001",type:"SAR",name:"GF-3_SAR_绵阳市_20260628",catalog:"遥感影像 / SAR / 高分三号 / 2026 / 06",region:"绵阳市全域",version:"V1.0",quality:"优 96.2",qualityClass:"",updated:"2026-06-29",owner:"遥感数据生产单位"},
+        {id:"RES-OPT-001",type:"OPT",name:"GF-2_DOM_绵阳市_202606",catalog:"遥感影像 / 光学 / 高分二号 / 2026 / 06",region:"绵阳市全域",version:"V1.2",quality:"优 94.8",qualityClass:"",updated:"2026-06-29",owner:"遥感数据生产单位"},
+        {id:"RES-BLD-001",type:"BLD",name:"涪城区房屋建筑轮廓_2026Q2",catalog:"房屋基础数据 / 涪城区 / 2026Q2",region:"涪城区",version:"V3.2",quality:"良 88.7",qualityClass:"warn",updated:"2026-06-28",owner:"绵阳市住建数据中心"},
+        {id:"RES-CHANGE-001",type:"CHANGE",name:"建筑变化图斑_202606",catalog:"变化监测成果 / 2026 / 06",region:"主城区",version:"V1.0",quality:"优 91.6",qualityClass:"",updated:"2026-06-28",owner:"项目承建单位"},
+        {id:"RES-INSAR-001",type:"INSAR",name:"PSInSAR_形变速率_202606",catalog:"形变监测成果 / PS-InSAR / 2026 / 06",region:"主城区",version:"V1.1",quality:"优 93.5",qualityClass:"",updated:"2026-06-28",owner:"项目承建单位"}
+      ];
+      var RESOURCE_COUNTS={SAR:{count:486,size:"4.82 TB"},OPT:{count:362,size:"7.46 TB"},BLD:{count:1084,size:"2.16 TB"},CHANGE:{count:248,size:"1.02 TB"},INSAR:{count:306,size:"3.26 TB"}};
+      var activeResourceType="ALL";
+
+      var MATCH_TASKS=[
+        {id:"MAT-20260629-006",name:"PS点房屋匹配_20260629",ps:"PSInSAR_202606_Batch03",building:"绵阳市房屋建筑实际轮廓_示范区",method:"面内优先 + 边界缓冲",buffer:"3.0米",progress:100,status:"已完成",stage:"匹配成果已入库",time:"10:36",started:"2026-06-29 10:12",matched:"1,050,671点",unmatched:"206,219点"},
+        {id:"MAT-20260628-004",name:"涪城区PS点补充匹配_20260628",ps:"SBAS_202606_Batch02",building:"涪城区房屋基础面_2026Q2",method:"最近邻自动归属",buffer:"5.0米",progress:72,status:"复核中",stage:"冲突对象复核",time:"昨日 18:42",started:"2026-06-28 18:20",matched:"862,416点",unmatched:"94,208点"}
+      ];
+      var activeMatchTaskId=null;
+
+      var MESSAGES=[
+        {id:"MSG-001",type:"success",icon:"✓",title:"GF-3 SAR影像接入成功",summary:"8组数据已完成质量检查并写入遥感影像资源库。",time:"10:18",unread:true,category:"数据接入",detail:"GF-3 SAR影像2026年6月第4批接入任务已全部完成。系统共扫描28个文件，形成8组有效数据，自动完成元数据解析、坐标标准化、质量检查、缩略图生成和资源入库。",fields:{"任务编号":"IMP-SAR-20260629-004","数据量":"8.42 GB","目标目录":"遥感影像 / SAR / 高分三号 / 2026年 / 06月","执行结果":"成功入库"}},
+        {id:"MSG-002",type:"security",icon:"♙",title:"用户登录提醒",summary:"数据管理员张明从10.16.8.21登录系统。",time:"09:58",unread:true,category:"安全提醒",detail:"系统检测到数据管理员张明成功登录住建系统-数据中台。该登录通过统一身份认证，客户端地址位于住建内部网络。",fields:{"用户":"张明","角色":"数据管理员","登录时间":"2026-06-29 09:58:42","客户端IP":"10.16.8.21"}},
+        {id:"MSG-003",type:"warn",icon:"!",title:"房屋基础数据质检发现问题",summary:"发现127项拓扑或必填属性问题，任务仍在质检中。",time:"09:42",unread:true,category:"质量预警",detail:"涪城区房屋基础数据更新任务在自动质量检查中发现127项问题，其中12项为需要人工确认的面重叠问题，其余为可自动修复的属性缺失或编码格式问题。",fields:{"任务编号":"IMP-BLD-20260629-011","问题总数":"127项","阻断问题":"12项","当前状态":"等待质检人员处理"}},
+        {id:"MSG-004",type:"success",icon:"↻",title:"夜间增量同步完成",summary:"房屋基础库、预警记录库与元数据目录同步完成。",time:"02:16",unread:false,category:"系统任务",detail:"每日02:00增量同步任务执行完成，三个数据源均连接正常。本次新增或更新18,624条记录。",fields:{"任务批次":"SYNC-20260629-0200","更新记录":"18,624条","耗时":"16分08秒","结果":"全部成功"}},
+        {id:"MSG-005",type:"warn",icon:"▣",title:"在线存储池容量提醒",summary:"高性能在线存储池使用率已达到82%，建议关注。",time:"昨日",unread:false,category:"资源提醒",detail:"高性能在线存储池容量使用率达到82%，已超过系统关注阈值80%。建议清理过期缓存或将低频数据迁移至对象存储归档池。",fields:{"存储池":"高性能在线存储池","已用容量":"41.0 TB","剩余容量":"9.0 TB","告警阈值":"80%"}}
+      ];
+      var activeTaskId=null;
+
+      function taskTagClass(task) {
+        if(task.status==="已入库") return "";
+        if(task.status==="待整改" || task.status==="失败") return "bad";
+        return "warn";
+      }
+      function taskIcon(task) {
+        return DATA[task.type] ? DATA[task.type].icon : "⇩";
+      }
+      function taskCardHtml(task) {
+        return '<div class="task" onclick="openTaskDetail(\''+task.id+'\')">' +
+          '<i>'+taskIcon(task)+'</i>' +
+          '<div class="task-main"><b>'+task.name+'</b><small>'+task.source+' · '+task.time+'</small>' +
+          '<div class="task-progress-line"><div class="progress"><i style="width:'+task.progress+'%"></i></div><strong>'+task.progress+'%</strong><em>'+task.stage+'</em></div></div>' +
+          '<span class="tag '+taskTagClass(task)+'">'+task.status+'</span></div>';
+      }
+      function monitorRowHtml(task) {
+        return '<div class="monitor-row" onclick="openTaskDetail(\''+task.id+'\')">' +
+          '<div><b>'+task.name+'</b><small>'+task.id+' · '+task.owner+'</small></div>' +
+          '<div><b style="font-size:12px">'+task.stage+'</b><small>'+task.source+'</small></div>' +
+          '<div class="monitor-progress"><div class="progress"><i style="width:'+task.progress+'%"></i></div><span>'+task.progress+'%</span></div>' +
+          '<span class="tag '+taskTagClass(task)+'">'+task.status+'</span></div>';
+      }
+      function renderTasks() {
+        var recent=document.getElementById("recentTaskList");
+        if(recent) recent.innerHTML=TASKS.slice(0,4).map(taskCardHtml).join("");
+        var monitor=document.getElementById("taskMonitorRows");
+        if(monitor) monitor.innerHTML=TASKS.slice(0,5).map(monitorRowHtml).join("");
+        var center=document.getElementById("taskCenterList");
+        if(center) center.innerHTML=TASKS.map(monitorRowHtml).join("");
+        var manageRows=document.getElementById("manageTaskRows");
+        if(manageRows) manageRows.innerHTML=TASKS.map(monitorRowHtml).join("");
+        var manageCount=document.getElementById("manageTaskCount");
+        if(manageCount) manageCount.textContent=TASKS.length;
+        if(activeTaskId && document.getElementById("taskDetailOverlay").classList.contains("show")) renderTaskDetail(activeTaskId);
+      }
+      function taskStageIndex(progress) {
+        if(progress>=100) return 6;
+        if(progress>=82) return 5;
+        if(progress>=65) return 4;
+        if(progress>=45) return 3;
+        if(progress>=25) return 2;
+        if(progress>=10) return 1;
+        return 0;
+      }
+      function renderTaskDetail(id) {
+        var task=TASKS.find(function(t){return t.id===id});
+        if(!task) return;
+        activeTaskId=id;
+        document.getElementById("taskDetailIcon").textContent=taskIcon(task);
+        document.getElementById("taskDetailTitle").textContent=task.name;
+        document.getElementById("taskDetailSubtitle").textContent=task.id+" · "+task.started+"开始";
+        var stages=[
+          ["读取数据源","建立连接并读取待接入文件或数据记录"],
+          ["扫描与结构识别","识别主文件、辅助文件、空间参考和时相"],
+          ["选择资源目录","确认目标目录、存储池和版本策略"],
+          ["字段与元数据映射","执行标准字段、坐标和单位转换"],
+          ["自动质量检查","执行完整性、空间范围、几何和属性规则"],
+          ["资源入库与归档","写入资源库并登记元数据、日志和版本"]
+        ];
+        var idx=taskStageIndex(task.progress);
+        var stageHtml=stages.map(function(s,i){
+          var state=i<idx?"done":(i===idx && task.progress<100?"running":"");
+          if(task.progress===100) state="done";
+          var symbol=state==="done"?"✓":(state==="running"?"↻":i+1);
+          var label=state==="done"?"已完成":(state==="running"?"执行中":"等待中");
+          return '<div class="pipeline-step '+state+'"><i class="pipeline-dot">'+symbol+'</i><div><b>'+s[0]+'</b><p>'+s[1]+'</p></div><time>'+label+'</time></div>';
+        }).join("");
+        var logs=task.logs.map(function(log){return '<div>['+log.slice(0,8)+'] '+log.slice(9)+'</div>'}).join("");
+        document.getElementById("taskDetailBody").innerHTML=
+          '<div class="task-overview">' +
+          '<div class="task-kpi"><span>当前状态</span><b>'+task.status+'</b></div>' +
+          '<div class="task-kpi"><span>数据规模</span><b>'+task.size+'</b></div>' +
+          '<div class="task-kpi"><span>数据对象</span><b>'+task.records+'</b></div></div>' +
+          '<div class="detail-progress-card"><div class="detail-progress-head"><b>总体接入进度 · '+task.stage+'</b><strong>'+task.progress+'%</strong></div><div class="progress"><i style="width:'+task.progress+'%"></i></div></div>' +
+          '<div class="pipeline-card"><div class="card-head" style="margin-bottom:0"><h3>数据汇聚全流程状态</h3><span>点击任务可持续查看进展</span></div><div class="pipeline-list">'+stageHtml+'</div></div>' +
+          '<div class="log-card"><div class="card-head" style="margin-bottom:0"><h3>执行日志</h3><span>自动刷新</span></div><div class="log-list">'+logs+'</div></div>';
+      }
+      function openTaskDetail(id) {
+        document.getElementById("taskCenterOverlay").classList.remove("show");
+        document.getElementById("taskDetailOverlay").classList.add("show");
+        renderTaskDetail(id);
+      }
+      function closeTaskDetail() {
+        document.getElementById("taskDetailOverlay").classList.remove("show");
+        activeTaskId=null;
+      }
+      function openTaskCenter() {
+        renderTasks();
+        document.getElementById("taskCenterOverlay").classList.add("show");
+      }
+      function closeTaskCenter() {
+        document.getElementById("taskCenterOverlay").classList.remove("show");
+      }
+      function createTaskFromWizard() {
+        captureWizardTaskName();
+        var now=new Date();
+        var hh=String(now.getHours()).padStart(2,"0");
+        var mm=String(now.getMinutes()).padStart(2,"0");
+        var stamp=now.getFullYear()+String(now.getMonth()+1).padStart(2,"0")+String(now.getDate()).padStart(2,"0");
+        var id="IMP-"+current+"-"+stamp+"-"+String(Math.floor(Math.random()*900)+100);
+        var finalName=(wizardTaskName||defaultIngestTaskName(current)).trim();
+        var task={id:id,type:current,name:finalName,source:sourceSummary(DATA[current]),time:hh+":"+mm,progress:6,status:"扫描中",stage:"读取数据源",size:"计算中",records:"识别中",owner:"绵阳市住建数据中心",started:now.toLocaleString("zh-CN",{hour12:false}),logs:[hh+":"+mm+":00 接入任务已创建",hh+":"+mm+":03 正在读取数据源配置"]};
+        TASKS.unshift(task);
+        renderTasks();
+        renderResourceManagement();
+        addSystemMessage({type:"success",icon:"＋",title:"新的数据接入任务已创建",summary:task.name+"已进入任务队列。",category:"数据接入",detail:"任务已创建并开始执行，可点击消息、首页任务卡片或数据管理模块查看全过程进展。",fields:{"任务编号":task.id,"任务名称":task.name,"数据类型":DATA[current].name,"数据来源":sourceSummary(DATA[current]),"当前状态":"读取数据源"}});
+        startTaskSimulation(task.id);
+        return task;
+      }
+      function startTaskSimulation(id) {
+        var timerId=setInterval(function(){
+          var task=TASKS.find(function(t){return t.id===id});
+          if(!task || task.progress>=100) { clearInterval(timerId); return; }
+          task.progress=Math.min(100,task.progress+Math.floor(Math.random()*9)+4);
+          var idx=taskStageIndex(task.progress);
+          var names=["读取数据源","扫描与结构识别","选择资源目录","字段与元数据映射","自动质量检查","资源入库与归档","资源入库完成"];
+          task.stage=names[Math.min(idx,names.length-1)];
+          task.status=task.progress>=100?"已入库":(task.progress>=82?"入库中":(task.progress>=65?"质检中":"执行中"));
+          var now=new Date();
+          var tm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0")+":"+String(now.getSeconds()).padStart(2,"0");
+          if(task.progress>=25 && task.size==="计算中") { task.size="4.28 GB"; task.records="6组数据"; }
+          task.logs.push(tm+" "+task.stage+"，总体进度"+task.progress+"%");
+          if(task.logs.length>8) task.logs=task.logs.slice(-8);
+          renderTasks();
+          if(task.progress>=100) {
+            ensureResourceFromTask(task);
+            renderResourceManagement();
+            addSystemMessage({type:"success",icon:"✓",title:task.name+"接入完成",summary:"数据已完成质量检查并写入平台资源库。",category:"数据接入",detail:"接入任务已完成全部六个流程阶段，数据、元数据、版本信息和操作日志均已登记。",fields:{"任务编号":task.id,"数据规模":task.size,"数据对象":task.records,"执行结果":"成功入库"}});
+          }
+        },3500);
+      }
+
+      function unreadMessageCount() {
+        return MESSAGES.filter(function(m){return m.unread}).length;
+      }
+      function updateMessageBadge() {
+        var count=unreadMessageCount();
+        var badge=document.getElementById("messageBadge");
+        if(!badge) return;
+        badge.textContent=count;
+        badge.style.display=count?"grid":"none";
+      }
+      function renderMessageList() {
+        document.getElementById("messageDrawerHead").innerHTML='<div><h3>消息中心</h3><small>'+unreadMessageCount()+'条未读 · 系统运行与数据接入通知</small></div><div class="spacer"></div><button class="btn" style="height:32px;font-size:12px" onclick="markAllMessagesRead()">全部已读</button><button class="icon-btn" onclick="closeMessageCenter()">✕</button>';
+        document.getElementById("messageDrawerBody").className="message-list";
+        document.getElementById("messageDrawerBody").innerHTML=MESSAGES.map(function(m){
+          return '<div class="message-item '+(m.unread?'unread':'')+'" onclick="openMessageDetail(\''+m.id+'\')"><i class="message-icon '+m.type+'">'+m.icon+'</i><div><b>'+(m.unread?'<span class="unread-dot"></span>':'')+m.title+'</b><p>'+m.summary+'</p></div><time>'+m.time+'</time></div>';
+        }).join("");
+        updateMessageBadge();
+      }
+      function toggleMessageCenter() {
+        var drawer=document.getElementById("messageDrawer");
+        if(drawer.classList.contains("show")) closeMessageCenter(); else openMessageCenter();
+      }
+      function openMessageCenter() {
+        renderMessageList();
+        document.getElementById("messageBackdrop").classList.add("show");
+        document.getElementById("messageDrawer").classList.add("show");
+      }
+      function closeMessageCenter() {
+        document.getElementById("messageBackdrop").classList.remove("show");
+        document.getElementById("messageDrawer").classList.remove("show");
+      }
+      function openMessageDetail(id) {
+        var msg=MESSAGES.find(function(m){return m.id===id});
+        if(!msg) return;
+        msg.unread=false;
+        updateMessageBadge();
+        document.getElementById("messageDrawerHead").innerHTML='<button class="icon-btn" onclick="renderMessageList()">←</button><div><h3>消息详情</h3><small>'+msg.category+'</small></div><div class="spacer"></div><button class="icon-btn" onclick="closeMessageCenter()">✕</button>';
+        var fields=Object.keys(msg.fields||{}).map(function(k){return '<dt>'+k+'</dt><dd>'+msg.fields[k]+'</dd>'}).join("");
+        document.getElementById("messageDrawerBody").className="message-detail";
+        document.getElementById("messageDrawerBody").innerHTML='<h4>'+msg.title+'</h4><div class="meta">'+msg.category+' · '+msg.time+'</div><div class="detail-box">'+msg.detail+'</div><dl>'+fields+'</dl>';
+      }
+      function markAllMessagesRead() {
+        MESSAGES.forEach(function(m){m.unread=false});
+        renderMessageList();
+        toast("所有消息已标记为已读");
+      }
+      function addSystemMessage(data) {
+        var now=new Date();
+        var msg={id:"MSG-"+Date.now(),type:data.type||"success",icon:data.icon||"✓",title:data.title,summary:data.summary,time:String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"),unread:true,category:data.category||"系统通知",detail:data.detail||data.summary,fields:data.fields||{}};
+        MESSAGES.unshift(msg);
+        updateMessageBadge();
+      }
+
+      function renderTypePicker() {
+        var grid=document.getElementById("typePickerGrid");
+        grid.innerHTML=Object.keys(DATA).map(function(k){var v=DATA[k];return '<div class="type-picker-card" onclick="chooseDataType(\''+k+'\')"><div class="type-icon">'+v.icon+'</div><h3>'+v.name+'</h3><p>'+v.desc+'</p><button class="btn primary">选择并开始配置</button></div>'}).join("");
+      }
+      function openNewTaskSelector() {
+        renderTypePicker();
+        document.getElementById("typeSelector").classList.add("show");
+      }
+      function closeTypeSelector() {
+        document.getElementById("typeSelector").classList.remove("show");
+      }
+      function chooseDataType(type) {
+        closeTypeSelector();
+        openWizard(type);
+        toast("已选择“"+DATA[type].name+"”，请配置数据来源");
+      }
+      function chooseDirectory() {
+        var picker=document.getElementById("directoryPicker");
+        picker.value="";
+        picker.click();
+      }
+      function handleDirectorySelection(input) {
+        if(!input.files || !input.files.length) { toast("未选择目录"); return; }
+        var rel=input.files[0].webkitRelativePath || input.files[0].name;
+        var root=rel.split("/")[0];
+        var path=document.getElementById("sourcePath");
+        if(path) path.value=root+"（已选择，本浏览器出于安全原因不显示完整磁盘路径）";
+        toast("目录选择成功："+root+"，共"+input.files.length+"个文件");
+      }
+      function saveMappingTemplate() {
+        toast(DATA[current].name+"字段映射模板已保存");
+      }
+
+      var cards=document.getElementById("typeCards");
+      Object.keys(DATA).forEach(function(k) {
+        var v=DATA[k];cards.innerHTML+='<div class="type-card">' +
+        '<div class="type-icon">'+v.icon+'</div>' +
+        '<h3>'+v.name+'</h3>' +
+        '<p>'+v.desc+'</p>' +
+        '<div class="type-meta">' +
+        '<span>已配置</span>' +
+        '<span>运行正常</span>' +
+        '</div>' +
+        '<button class="btn primary" onclick="openWizard(\''+k+'\')">开始配置接入</button>' +
+        '</div>'
+      });
+      var titles= {
+        gather:"数据汇聚接入模块",
+        manage:"数据管理模块",
+        matching:"PS点和房屋匹配模块",
+        audit:"数据质量稽查模块",
+        archive:"数据成果归档模块",
+        share:"数据共享与接口模块",
+        metadata:"元数据模块",
+        security:"系统权限与日志模块"
+      };
+      document.querySelectorAll(".nav[data-page]").forEach(function(n) {
+        n.onclick=function() {
+          showPage(n.dataset.page)
+        }
+      });
+      function showPage(id) {
+        document.querySelectorAll(".page").forEach(function(p) {
+          p.classList.toggle("active",p.id===id)
+        });
+        document.querySelectorAll(".nav").forEach(function(n) {
+          n.classList.toggle("active",n.dataset.page===id)
+        });
+        document.getElementById("pageTitle").textContent=titles[id];
+        var workspace=document.querySelector(".workspace");
+        if(workspace) workspace.scrollTop=0;
+        if(id==="matching") {
+          initMatchMap();
+          renderMatchTasks();
+        }
+        if(id==="manage") {
+          renderResourceManagement();
+          renderTasks();
+        }
+      }
+      var current="SAR",wstep=0,sourceType="local",wizardTaskName="";
+      var stepNames=["配置数据源","扫描识别","选择资源目录","字段与元数据映射","质量规则","确认入库"];
+      function currentDateStamp() {
+        var d=new Date();
+        return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+      }
+      function defaultIngestTaskName(type) {
+        return DATA[type].name+"_"+currentDateStamp();
+      }
+      function setWizardTaskName(value) {
+        wizardTaskName=value;
+        var input=document.getElementById("wizardTaskName");
+        if(input && input.value!==value) input.value=value;
+        var confirmInput=document.getElementById("confirmTaskName");
+        if(confirmInput && confirmInput.value!==value) confirmInput.value=value;
+      }
+      function captureWizardTaskName() {
+        var input=document.getElementById("wizardTaskName") || document.getElementById("confirmTaskName");
+        if(input && input.value.trim()) wizardTaskName=input.value.trim();
+        if(!wizardTaskName) wizardTaskName=defaultIngestTaskName(current);
+      }
+      function resetWizardPosition() {
+        var wizard=document.querySelector("#mask .wizard");
+        if(!wizard) return;
+        wizard.style.left="50%";
+        wizard.style.top="50%";
+        wizard.style.transform="translate(-50%,-50%)";
+      }
+      function openWizard(k) {
+        current=k;
+        wstep=0;
+        sourceType="local";
+        wizardTaskName=defaultIngestTaskName(k);
+        resetWizardPosition();
+        document.getElementById("mask").classList.add("show");
+        document.getElementById("wizIcon").textContent=DATA[k].icon;
+        document.getElementById("wizTitle").textContent=DATA[k].name+"接入配置";
+        document.getElementById("wizSub").textContent="任务名称可修改 · 提交后同步显示至任务栏和数据管理模块";
+        renderWizard()
+      }
+      function closeWizard() {
+        document.getElementById("mask").classList.remove("show")
+      }
+      function renderWizard() {
+        captureWizardTaskName();
+        document.getElementById("wizSteps").innerHTML=stepNames.map(function(s,i) {
+          return '<div class="step '+(i<=wstep?"active":"")+'"><i>'+(i<wstep?"✓":i+1)+'</i>'+s+"</div>"
+        }).join("");
+        document.getElementById("stepTip").textContent="步骤 "+(wstep+1)+" / 6 · "+stepNames[wstep];
+        document.getElementById("prevBtn").style.display=wstep===0?"none":"inline-block";
+        document.getElementById("nextBtn").textContent=wstep===5?"创建任务并开始接入":"下一步";
+        document.getElementById("wizBody").innerHTML=[sourceStep,scanStep,catalogStep,mapStep,qualityStep,confirmStep][wstep]()
+      }
+      var SOURCE_TYPES={
+        local:{name:"本地 / 共享目录",icon:"▰",desc:"磁盘、NAS或共享文件夹"},
+        ftp:{name:"FTP / SFTP",icon:"⇄",desc:"远程文件服务器"},
+        object:{name:"对象存储",icon:"☁",desc:"S3、OSS、COS或MinIO"},
+        database:{name:"空间数据库",icon:"▥",desc:"PostGIS、Oracle Spatial等"},
+        api:{name:"服务接口",icon:"⌁",desc:"REST、OGC API、WFS等"}
+      };
+      function selectSourceType(type) {
+        if(!SOURCE_TYPES[type]) return;
+        sourceType=type;
+        document.querySelectorAll(".source-option[data-source]").forEach(function(el) {
+          var active=el.dataset.source===type;
+          el.classList.toggle("active",active);
+          el.setAttribute("aria-pressed",active?"true":"false")
+        });
+        var panel=document.getElementById("sourceConfigPanel");
+        if(panel) panel.innerHTML=sourceConfigPanel(DATA[current],type);
+        toast("已切换为“"+SOURCE_TYPES[type].name+"”数据源配置")
+      }
+      function sourceStep() {
+        var v=DATA[current];
+        var options=Object.keys(SOURCE_TYPES).map(function(key) {
+          var item=SOURCE_TYPES[key];
+          var active=key===sourceType;
+          return '<div class="source-option '+(active?'active':'')+'" data-source="'+key+'" role="button" tabindex="0" aria-pressed="'+(active?'true':'false')+'" onclick="selectSourceType(\''+key+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();selectSourceType(\''+key+'\')}">' +
+            '<b>'+item.icon+'</b><span>'+item.name+'</span><small>'+item.desc+'</small></div>'
+        }).join("");
+        return '<h3>配置数据来源与读取策略</h3>' +
+        '<div class="hint">先设置任务名称，再选择数据来源方式。任务名称默认采用“数据接入类型+当前日期”，可自由修改，并将同步显示在任务列表中。</div>' +
+        '<div class="task-name-panel"><label>数据接入任务名称</label><input id="wizardTaskName" value="'+wizardTaskName+'" oninput="setWizardTaskName(this.value)"><small>默认：数据类型 + '+currentDateStamp()+'</small></div>' +
+        '<div class="source-options">'+options+'</div>' +
+        '<div id="sourceConfigPanel" class="source-config-panel">'+sourceConfigPanel(v,sourceType)+'</div>'
+      }
+      function commonTaskSecurity(testText) {
+        return '<div class="form-section">' +
+          '<h4>读取与同步策略</h4>' +
+          '<div class="field"><label>接入方式</label><select><option>一次性全量接入</option><option>增量监听 / 轮询</option><option>定时同步</option></select></div>' +
+          '<div class="field"><label>执行周期</label><select><option>立即执行</option><option>每小时</option><option>每日 02:00</option><option>自定义 Cron 表达式</option></select></div>' +
+          '<div class="switch-row"><span>失败后自动重试（3次）</span><i class="switch"></i></div>' +
+          '<div class="switch-row"><span>仅接入新增或更新数据</span><i class="switch"></i></div>' +
+          '</div>' +
+          '<div class="form-section">' +
+          '<h4>任务与安全设置</h4>' +
+          '<div class="field"><label>数据责任单位</label><select><option>绵阳市住建数据中心</option><option>遥感数据生产单位</option><option>项目承建单位</option></select></div>' +
+          '<div class="field"><label>数据密级</label><select><option>内部</option><option>公开</option><option>受限</option></select></div>' +
+          '<div class="source-actions"><button class="btn primary" onclick="toast(\''+testText+'\')">测试连接</button><button class="btn" onclick="toast(\'当前数据源参数已保存为连接模板\')">保存连接模板</button><span class="status">● 可在此验证访问权限</span></div>' +
+          '</div>'
+      }
+      function sourceConfigPanel(v,type) {
+        var commonName='<div class="field"><label>数据源名称</label><input value="'+v.name+'_'+SOURCE_TYPES[type].name.replace(/\s|\//g,"_")+'_20260629"></div>';
+        if(type==="ftp") {
+          return '<div class="source-tip"><b>FTP / SFTP</b><span>适用于从卫星数据供应商、生产中心或外部文件服务器按目录批量拉取数据，支持密码或SSH密钥认证。</span></div>' +
+            '<div class="form-grid">' +
+            '<div class="form-section"><h4>服务器连接</h4>'+commonName+
+            '<div class="field"><label>传输协议</label><select><option>SFTP（推荐）</option><option>FTP</option><option>FTPS</option></select></div>' +
+            '<div class="form-grid"><div class="field"><label>服务器地址</label><input value="10.20.6.18"></div><div class="field"><label>端口</label><input value="22"></div></div>' +
+            '<div class="field"><label>远程目录</label><input value="/data/'+current.toLowerCase()+'/202606"></div></div>' +
+            '<div class="form-section"><h4>身份认证</h4>' +
+            '<div class="field"><label>认证方式</label><select><option>用户名 + 密码</option><option>SSH私钥</option><option>匿名访问</option></select></div>' +
+            '<div class="field"><label>用户名</label><input value="sar_ingest"></div>' +
+            '<div class="field"><label>密码 / 私钥口令</label><input type="password" value="12345678"></div>' +
+            '<div class="switch-row"><span>校验服务器主机指纹</span><i class="switch"></i></div></div>' +
+            '<div class="form-section full"><h4>文件读取范围</h4><div class="form-grid"><div class="field"><label>文件匹配规则</label><input value="'+v.pattern+'"></div><div class="field"><label>字符编码</label><select><option>自动识别</option><option>UTF-8</option><option>GBK</option></select></div></div><div class="switch-row"><span>递归扫描远程子目录</span><i class="switch"></i></div><div class="switch-row"><span>下载完成后校验文件MD5</span><i class="switch"></i></div></div>' +
+            commonTaskSecurity('连接测试成功：SFTP服务器可访问，远程目录中发现28个候选文件') + '</div>'
+        }
+        if(type==="object") {
+          return '<div class="source-tip"><b>对象存储</b><span>适用于海量遥感影像和成果文件的云端存储接入，可按Bucket、前缀目录和对象标签进行增量扫描。</span></div>' +
+            '<div class="form-grid">' +
+            '<div class="form-section"><h4>存储服务</h4>'+commonName+
+            '<div class="field"><label>存储类型</label><select><option>S3兼容 / MinIO</option><option>阿里云 OSS</option><option>腾讯云 COS</option><option>华为云 OBS</option></select></div>' +
+            '<div class="field"><label>服务端点 Endpoint</label><input value="https://minio.rs-platform.local"></div>' +
+            '<div class="field"><label>区域 Region</label><input value="cn-southwest-1"></div></div>' +
+            '<div class="form-section"><h4>访问凭证</h4><div class="field"><label>Access Key</label><input value="RS_PLATFORM_AK"></div><div class="field"><label>Secret Key</label><input type="password" value="1234567890"></div><div class="switch-row"><span>使用HTTPS安全连接</span><i class="switch"></i></div><div class="switch-row"><span>启用服务端加密</span><i class="switch"></i></div></div>' +
+            '<div class="form-section full"><h4>对象读取范围</h4><div class="form-grid"><div class="field"><label>Bucket</label><input value="remote-sensing-data"></div><div class="field"><label>对象前缀 Prefix</label><input value="'+current.toLowerCase()+'/2026/06/"></div></div><div class="field"><label>对象匹配规则</label><input value="'+v.pattern+'"></div><div class="switch-row"><span>读取对象标签与自定义元数据</span><i class="switch"></i></div></div>' +
+            commonTaskSecurity('连接测试成功：对象存储可访问，Bucket中匹配到126个对象') + '</div>'
+        }
+        if(type==="database") {
+          return '<div class="source-tip"><b>空间数据库</b><span>适用于直接接入矢量、栅格、PS点或业务表数据，可指定模式、表、视图或自定义SQL查询范围。</span></div>' +
+            '<div class="form-grid">' +
+            '<div class="form-section"><h4>数据库连接</h4>'+commonName+
+            '<div class="field"><label>数据库类型</label><select><option>PostgreSQL / PostGIS</option><option>Oracle Spatial</option><option>SQL Server</option><option>MySQL</option></select></div>' +
+            '<div class="form-grid"><div class="field"><label>服务器地址</label><input value="10.20.8.32"></div><div class="field"><label>端口</label><input value="5432"></div></div>' +
+            '<div class="field"><label>数据库名称</label><input value="rs_platform"></div></div>' +
+            '<div class="form-section"><h4>认证与连接池</h4><div class="field"><label>用户名</label><input value="rs_reader"></div><div class="field"><label>密码</label><input type="password" value="12345678"></div><div class="form-grid"><div class="field"><label>最小连接数</label><input value="2"></div><div class="field"><label>最大连接数</label><input value="10"></div></div><div class="switch-row"><span>启用SSL加密连接</span><i class="switch"></i></div></div>' +
+            '<div class="form-section full"><h4>数据对象与查询范围</h4><div class="form-grid"><div class="field"><label>Schema / 模式</label><input value="public"></div><div class="field"><label>表或视图</label><input value="'+current.toLowerCase()+'_result_202606"></div></div><div class="field"><label>增量识别字段</label><select><option>更新时间 update_time</option><option>主键ID</option><option>不启用增量识别</option></select></div><div class="field"><label>自定义过滤条件（可选）</label><textarea>acquisition_time &gt;= &#39;2026-06-01&#39; AND status = &#39;VALID&#39;</textarea></div></div>' +
+            commonTaskSecurity('连接测试成功：数据库连接正常，目标表可读取，共1,256,890条记录') + '</div>'
+        }
+        if(type==="api") {
+          return '<div class="source-tip"><b>服务接口</b><span>适用于从REST、OGC API、WFS或业务系统接口按请求参数获取数据，支持Token、API Key和OAuth2认证。</span></div>' +
+            '<div class="form-grid">' +
+            '<div class="form-section"><h4>接口基本信息</h4>'+commonName+
+            '<div class="field"><label>接口类型</label><select><option>REST API</option><option>OGC API - Features</option><option>WFS</option><option>WMS / WMTS</option></select></div>' +
+            '<div class="field"><label>请求地址 URL</label><input value="https://api.example.gov.cn/v1/'+current.toLowerCase()+'/datasets"></div>' +
+            '<div class="form-grid"><div class="field"><label>请求方法</label><select><option>GET</option><option>POST</option></select></div><div class="field"><label>超时时间</label><input value="60 秒"></div></div></div>' +
+            '<div class="form-section"><h4>认证方式</h4><div class="field"><label>身份认证</label><select><option>Bearer Token</option><option>API Key</option><option>Basic Auth</option><option>OAuth 2.0</option><option>无需认证</option></select></div><div class="field"><label>Token / API Key</label><input type="password" value="demo-token-2026"></div><div class="field"><label>请求头名称</label><input value="Authorization"></div><div class="switch-row"><span>自动刷新访问令牌</span><i class="switch"></i></div></div>' +
+            '<div class="form-section full"><h4>请求参数与响应解析</h4><div class="form-grid"><div class="field"><label>分页方式</label><select><option>page / pageSize</option><option>offset / limit</option><option>游标 Cursor</option><option>不分页</option></select></div><div class="field"><label>单页记录数</label><input value="1000"></div></div><div class="field"><label>请求参数（JSON）</label><textarea>{\n  "startTime": "2026-06-01",\n  "endTime": "2026-06-30",\n  "dataType": "'+current+'"\n}</textarea></div><div class="field"><label>数据节点 JSONPath</label><input value="$.data.items"></div></div>' +
+            commonTaskSecurity('连接测试成功：接口返回200，已识别1000条示例记录') + '</div>'
+        }
+        return '<div class="source-tip"><b>本地 / 共享目录</b><span>适用于本机磁盘、移动存储、NAS及Windows共享目录，可递归扫描文件并监听新增数据。</span></div>' +
+          '<div class="form-grid">' +
+          '<div class="form-section full"><h4>来源目录设置</h4>'+commonName+
+          '<div class="field"><label>文件来源目录</label><div class="path-input"><input id="sourcePath" value="'+v.source+'"><button class="btn" onclick="chooseDirectory()">选择目录</button></div></div>' +
+          '<div class="field"><label>文件匹配规则</label><input value="'+v.pattern+'"></div></div>' +
+          '<div class="form-section"><h4>目录读取设置</h4><div class="field"><label>字符编码</label><select><option>自动识别</option><option>UTF-8</option><option>GBK</option></select></div><div class="switch-row"><span>递归扫描子目录</span><i class="switch"></i></div><div class="switch-row"><span>监听目录新增文件</span><i class="switch"></i></div></div>' +
+          '<div class="form-section"><h4>访问权限</h4><div class="field"><label>共享目录账号（可选）</label><input placeholder="DOMAIN\\username"></div><div class="field"><label>共享目录密码（可选）</label><input type="password" placeholder="请输入密码"></div><div class="source-actions"><button class="btn primary" onclick="toast(\'连接测试成功：目录可访问，发现28个候选文件\')">测试目录连接</button><button class="btn" onclick="toast(\'当前目录配置已保存为模板\')">保存连接模板</button></div></div>' +
+          commonTaskSecurity('连接测试成功：目录可访问，发现28个候选文件') + '</div>'
+      }
+      function sourceSummary(v) {
+        if(sourceType==="ftp") return "SFTP · 10.20.6.18:22 /data/"+current.toLowerCase()+"/202606";
+        if(sourceType==="object") return "S3兼容对象存储 · remote-sensing-data/"+current.toLowerCase()+"/2026/06/";
+        if(sourceType==="database") return "PostgreSQL/PostGIS · 10.20.8.32:5432 / rs_platform.public";
+        if(sourceType==="api") return "REST API · https://api.example.gov.cn/v1/"+current.toLowerCase()+"/datasets";
+        return "本地 / 共享目录 · "+v.source
+      }
+      function scanStep() {
+        var v=DATA[current];
+        return '<h3>扫描并识别数据文件</h3>' +
+        '<div class="hint">系统已按照当前数据源配置读取数据，并自动识别主文件、辅助文件、空间参考和数据时相。</div>' +
+        '<div class="scanbox">' +
+        '<div class="scan-summary">' +
+        '<div class="scan-stat">' +
+        '<span>扫描文件</span>' +
+        '<b>28</b>' +
+        '</div>' +
+        '<div class="scan-stat">' +
+        '<span>有效数据组</span>' +
+        '<b>8</b>' +
+        '</div>' +
+        '<div class="scan-stat">' +
+        '<span>总数据量</span>' +
+        '<b>8.42 GB</b>' +
+        '</div>' +
+        '<div class="scan-stat">' +
+        '<span>识别异常</span>' +
+        '<b style="color:#e59a22">1</b>' +
+        '</div>' +
+        '</div>' +
+        '<table>' +
+        '<thead>' +
+        '<tr>' +
+        '<th>文件 / 数据组</th>' +
+        '<th>类型</th>' +
+        '<th>大小</th>' +
+        '<th>空间参考</th>' +
+        '<th>数据时相</th>' +
+        '<th>识别状态</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>' +
+        '<tr>' +
+        '<td>GF3_SLC_20260628_001.tif</td>' +
+        '<td>主影像</td>' +
+        '<td>1.26GB</td>' +
+        '<td>WGS84</td>' +
+        '<td>2026-06-28</td>' +
+        '<td>' +
+        '<span class="tag">正常</span>' +
+        '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>GF3_SLC_20260628_001.xml</td>' +
+        '<td>元数据</td>' +
+        '<td>182KB</td>' +
+        '<td>—</td>' +
+        '<td>2026-06-28</td>' +
+        '<td>' +
+        '<span class="tag">已关联</span>' +
+        '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>GF3_ORBIT_20260628.eof</td>' +
+        '<td>精密轨道</td>' +
+        '<td>4.8MB</td>' +
+        '<td>—</td>' +
+        '<td>2026-06-28</td>' +
+        '<td>' +
+        '<span class="tag">已关联</span>' +
+        '</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>GF3_SLC_20260621_008.tif</td>' +
+        '<td>主影像</td>' +
+        '<td>1.18GB</td>' +
+        '<td>WGS84</td>' +
+        '<td>2026-06-21</td>' +
+        '<td>' +
+        '<span class="tag warn">缺轨道文件</span>' +
+        '</td>' +
+        '</tr>' +
+        '</tbody>' +
+        '</table>' +
+        '</div>' +
+        '<div class="notice">自动识别参数：'+v.special+'。异常文件可跳过接入，也可返回来源目录补充文件后重新扫描。</div>'
+      }
+      function catalogStep() {
+        var v=DATA[current];
+        return '<h3>选择目标资源目录与存储位置</h3>' +
+        '<div class="hint">选择数据入库后的目录层级、物理存储空间和目录新建策略。该位置将用于后续检索、版本和共享授权。</div>' +
+        '<div class="catalog-layout">' +
+        '<div class="tree">' +
+        '<h4>平台资源目录</h4>' +
+        '<div class="tree-node">▾ 全部数据资源</div>' +
+        '<div class="tree-node child">▾ 遥感影像</div>' +
+        '<div class="tree-node grand">▾ SAR影像</div>' +
+        '<div class="tree-node grand active">　高分三号 / 2026年 / 06月</div>' +
+        '<div class="tree-node grand">　Sentinel-1 / 2026年</div>' +
+        '<div class="tree-node child">▸ 高分光学影像</div>' +
+        '<div class="tree-node child">▸ 房屋基础数据</div>' +
+        '<div class="tree-node child">▸ 变化监测成果</div>' +
+        '<div class="tree-node child">▸ InSAR形变成果</div>' +
+        '</div>' +
+        '<div class="catalog-info">' +
+        '<h4>目标目录配置</h4>' +
+        '<div class="field">' +
+        '<label>已选择资源目录</label>' +
+        '<input value="'+v.catalog+'">' +
+        '</div>' +
+        '<div class="field">' +
+        '<label>物理存储空间</label>' +
+        '<select>' +
+        '<option>遥感数据对象存储池（剩余41.3TB）</option>' +
+        '<option>高性能在线存储池（剩余8.6TB）</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="field">' +
+        '<label>存储路径预览</label>' +
+        '<input value="/resources/2026/06/'+current.toLowerCase()+'/GF3_20260628">' +
+        '</div>' +
+        '<div class="field">' +
+        '<label>同名资源处理</label>' +
+        '<select>' +
+        '<option>创建新版本，不覆盖历史数据</option>' +
+        '<option>跳过同名资源</option>' +
+        '<option>覆盖当前版本</option>' +
+        '</select>' +
+        '</div>' +
+        '<div class="switch-row">' +
+        '<span>按数据时相自动创建月份目录</span>' +
+        '<i class="switch">' +
+        '</i>' +
+        '</div>' +
+        '<div class="switch-row">' +
+        '<span>入库后自动生成资源缩略图</span>' +
+        '<i class="switch">' +
+        '</i>' +
+        '</div>' +
+        '<button class="btn" onclick="toast(\'已打开新建目录面板（演示）\')">＋ 在此处新建子目录</button>' +
+        '</div>' +
+        '</div>'
+      }
+      function mapStep() {
+        return '<h3>字段与元数据标准映射</h3>' +
+        '<div class="hint">将源数据元数据字段映射至平台标准字段。系统已根据数据类型完成自动匹配，可手动调整或保存为模板。</div>' +
+        '<div class="form-section" style="padding:0;overflow:hidden">' +
+        '<div class="mapping header">' +
+        '<span>源字段 / 元数据项</span>' +
+        '<span>' +
+        '</span>' +
+        '<span>平台标准字段</span>' +
+        '<span>转换方式</span>' +
+        '</div>' +
+        '<div class="mapping">' +
+        '<span>SatelliteID</span>' +
+        '<span class="map-arrow">→</span>' +
+        '<select>' +
+        '<option>卫星标识</option>' +
+        '</select>' +
+        '<span>原值</span>' +
+        '</div>' +
+        '<div class="mapping">' +
+        '<span>SensorID</span>' +
+        '<span class="map-arrow">→</span>' +
+        '<select>' +
+        '<option>传感器名称</option>' +
+        '</select>' +
+        '<span>字典转换</span>' +
+        '</div>' +
+        '<div class="mapping">' +
+        '<span>ImagingTime</span>' +
+        '<span class="map-arrow">→</span>' +
+        '<select>' +
+        '<option>数据获取时间</option>' +
+        '</select>' +
+        '<span>日期标准化</span>' +
+        '</div>' +
+        '<div class="mapping">' +
+        '<span>OrbitDirection</span>' +
+        '<span class="map-arrow">→</span>' +
+        '<select>' +
+        '<option>轨道方向</option>' +
+        '</select>' +
+        '<span>代码映射</span>' +
+        '</div>' +
+        '<div class="mapping">' +
+        '<span>PolarMode</span>' +
+        '<span class="map-arrow">→</span>' +
+        '<select>' +
+        '<option>极化方式</option>' +
+        '</select>' +
+        '<span>原值</span>' +
+        '</div>' +
+        '<div class="mapping">' +
+        '<span>SpatialResolution</span>' +
+        '<span class="map-arrow">→</span>' +
+        '<select>' +
+        '<option>空间分辨率</option>' +
+        '</select>' +
+        '<span>单位：米</span>' +
+        '</div>' +
+        '</div>' +
+        '<div class="notice">映射检查：6个必填字段已全部匹配，2个可选字段将使用默认值。目标坐标系统一转换为CGCS2000。</div>' +
+        '<div style="margin-top:10px">' +
+        '<button class="btn" onclick="toast(\'自动匹配完成，字段匹配率92%\')">重新自动匹配</button> <button class="btn" onclick="saveMappingTemplate()">保存映射模板</button>' +
+        '</div>'
+      }
+      function qualityStep() {
+        var rules=current==="SAR"?[["文件完整性","必须包含主影像、XML元数据和轨道文件","100%"],["空间覆盖率","影像对绵阳市项目区的最低覆盖比例","≥95%"],["空间分辨率","SAR影像允许的最大空间分辨率","≤10m"],["时间有效性","数据获取时间必须位于监测周期内","30天"],["坐标参考","允许WGS84并统一转换为CGCS2000","一致"],["元数据完整性","卫星、轨道、极化、时相字段不得为空","100%"]]:[["文件与结构完整性","主文件及辅助文件完整","100%"],["空间范围检查","数据必须位于项目行政区范围","≥95%"],["坐标参考检查","坐标系可识别并可转换","一致"],["必填属性检查","平台标准必填字段不得为空","100%"],["几何合法性","不得存在空几何或非法图形","0个"],["数据时相检查","获取时间位于任务指定范围","有效"]];
+        return '<h3>选择质量检查方案并配置阈值</h3>' +
+        '<div class="hint">质量检查将作为接入任务的自动步骤执行。严重问题可阻断入库，一般问题允许带告警入库。</div>' +
+        '<div class="rule-list">'+rules.map(function(r,i) {
+          return '<div class="quality-rule">' +
+          '<div class="row">' +
+          '<i class="check">✓</i>' +
+          '<b>'+r[0]+'</b>' +
+          '<span class="tag '+(i===0?"bad":"")+'" style="margin-left:auto">'+(i===0?"阻断":"一般")+'</span>' +
+          '</div>' +
+          '<small>'+r[1]+'</small>' +
+          '<div class="inline-param">' +
+          '<span>检查阈值</span>' +
+          '<input value="'+r[2]+'">' +
+          '<span>启用</span>' +
+          '<i class="switch">' +
+          '</i>' +
+          '</div>' +
+          '</div>'
+        }).join("")+'</div>' +
+        '<div class="notice">已选择“'+DATA[current].name+'标准接入检查方案 V2.1”，共6项规则，其中1项配置为严重问题阻断入库。</div>'
+      }
+      function confirmStep() {
+        var v=DATA[current];
+        return '<h3>确认接入配置并创建任务</h3>' +
+        '<div class="hint">请核对数据来源、目标资源目录、映射模板和质检方案。创建后系统将按流程自动执行并记录完整日志。</div>' +
+        '<div class="summary">' +
+        '<div class="summary-grid">' +
+        '<div class="summary-item editable-task-name">' +
+        '<span>任务名称（可修改）</span>' +
+        '<input id="confirmTaskName" value="'+wizardTaskName+'" oninput="setWizardTaskName(this.value)">' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>任务编号</span>' +
+        '<b>IMP-'+current+'-'+currentDateStamp()+'-自动生成</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>执行方式</span>' +
+        '<b>立即执行 · 一次性全量</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>数据来源方式</span>' +
+        '<b>'+sourceSummary(v)+'</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>识别结果</span>' +
+        '<b>28个文件 / 8组数据 / 8.42GB</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>异常处理</span>' +
+        '<b>跳过1个缺少辅助文件的数据组</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>目标资源目录</span>' +
+        '<b>'+v.catalog+'</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>同名资源策略</span>' +
+        '<b>创建新版本，不覆盖历史数据</b>' +
+        '</div>' +
+        '<div class="summary-item">' +
+        '<span>质量方案</span>' +
+        '<b>'+v.name+'标准接入检查方案 V2.1</b>' +
+        '</div>' +
+        '</div>' +
+        '<div class="notice">任务执行顺序：读取文件 → 结构识别 → 坐标与字段标准化 → 自动质检 → 生成缩略图 → 资源入库 → 记录元数据与操作日志。</div>' +
+        '</div>'
+      }
+      function nextStep() {
+        captureWizardTaskName();
+        if(wstep<5) {
+          wstep++;
+          renderWizard()
+        }else {
+          var task=createTaskFromWizard();
+          closeWizard();
+          toast("任务“"+task.name+"”已创建，正在读取数据源");
+          setTimeout(function(){openTaskDetail(task.id)},280)
+        }
+      }
+      function prevStep() {
+        captureWizardTaskName();
+        if(wstep>0) {
+          wstep--;
+          renderWizard()
+        }
+      }function saveDraft() {
+        captureWizardTaskName();
+        toast("任务“"+wizardTaskName+"”的当前配置已保存为草稿")
+      }
+
+      function escapeHtml(value) {
+        return String(value==null?"":value).replace(/[&<>\"]/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;"}[ch]});
+      }
+      function ensureResourceFromTask(task) {
+        if(RESOURCE_DATA.some(function(r){return r.sourceTaskId===task.id})) return;
+        var now=new Date();
+        var date=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+        RESOURCE_DATA.unshift({id:"RES-"+Date.now(),sourceTaskId:task.id,type:task.type,name:task.name,catalog:DATA[task.type].catalog,region:task.type==="BLD"?"涪城区":(task.type==="SAR"||task.type==="OPT"?"绵阳市全域":"主城区"),version:"V1.0",quality:"待评定",qualityClass:"warn",updated:date,owner:task.owner});
+      }
+      function resourceCategoryHtml(type) {
+        var item=DATA[type],meta=RESOURCE_COUNTS[type];
+        return '<div class="resource-category-card '+(activeResourceType===type?'active':'')+'" onclick="selectResourceType(\''+type+'\')"><div class="type-icon">'+item.icon+'</div><h3>'+item.name+'</h3><p>'+item.desc+'</p><div class="resource-category-meta"><span>'+meta.count+'个数据集</span><b>'+meta.size+'</b></div></div>';
+      }
+      function selectResourceType(type) {
+        activeResourceType=type||"ALL";
+        var select=document.getElementById("resourceTypeFilter");
+        if(select && select.value!==activeResourceType) select.value=activeResourceType;
+        document.querySelectorAll(".resource-tree-row[data-resource-type]").forEach(function(row){row.classList.toggle("active",row.dataset.resourceType===activeResourceType)});
+        renderResourceManagement();
+      }
+      function renderResourceCategoryGrid() {
+        var grid=document.getElementById("resourceCategoryGrid");
+        if(!grid) return;
+        grid.innerHTML=["SAR","OPT","BLD","CHANGE","INSAR"].map(resourceCategoryHtml).join("");
+      }
+      function renderResourceTable() {
+        var body=document.getElementById("resourceTableBody");
+        if(!body) return;
+        var search=(document.getElementById("resourceSearch")||{}).value||"";
+        var region=(document.getElementById("resourceRegionFilter")||{}).value||"全部行政区";
+        var rows=RESOURCE_DATA.filter(function(r){
+          var typeOk=activeResourceType==="ALL"||r.type===activeResourceType;
+          var regionOk=region==="全部行政区"||r.region===region;
+          var q=search.trim().toLowerCase();
+          var searchOk=!q||[r.name,r.catalog,r.owner,r.id].join(" ").toLowerCase().indexOf(q)>=0;
+          return typeOk&&regionOk&&searchOk;
+        });
+        body.innerHTML=rows.length?rows.map(function(r){
+          return '<tr><td><b>'+escapeHtml(r.name)+'</b><br><small style="color:#96a3b2">'+escapeHtml(r.id)+'</small></td><td>'+escapeHtml(r.catalog)+'</td><td>'+escapeHtml(DATA[r.type].name)+'</td><td>'+escapeHtml(r.region)+'</td><td>'+escapeHtml(r.version)+'</td><td><span class="tag '+(r.qualityClass||"")+'">'+escapeHtml(r.quality)+'</span></td><td>'+escapeHtml(r.updated)+'</td><td><span class="link" onclick="toast(\'已打开资源浏览窗口\')">浏览</span><span class="link" onclick="toast(\'已打开资源详情\')">详情</span><span class="link" onclick="toast(\'已打开版本记录\')">版本</span></td></tr>';
+        }).join(""):'<tr><td colspan="8"><div class="empty-note">当前筛选条件下暂无数据资源</div></td></tr>';
+      }
+      function renderResourceManagement() {
+        renderResourceCategoryGrid();
+        renderResourceTable();
+        var count=document.getElementById("resourceDatasetCount");
+        if(count) count.textContent=(2486+Math.max(0,RESOURCE_DATA.length-5)).toLocaleString("zh-CN");
+      }
+
+      function defaultMatchTaskName() {
+        return "PS点房屋匹配_"+currentDateStamp();
+      }
+      function openMatchTaskModal(fromQuickPanel) {
+        document.getElementById("matchTaskName").value=defaultMatchTaskName();
+        if(fromQuickPanel) {
+          document.getElementById("matchTaskPs").value=document.getElementById("quickMatchPs").value;
+          document.getElementById("matchTaskBuilding").value=document.getElementById("quickMatchBuilding").value;
+          document.getElementById("matchTaskMethod").value=document.getElementById("quickMatchMethod").value;
+          document.getElementById("matchTaskBuffer").value=document.getElementById("quickMatchBuffer").value;
+          document.getElementById("matchTaskMin").value=document.getElementById("quickMatchMin").value;
+        }
+        document.getElementById("matchTaskOverlay").classList.add("show");
+      }
+      function closeMatchTaskModal() {
+        document.getElementById("matchTaskOverlay").classList.remove("show");
+      }
+      function matchTaskTagClass(task) {
+        if(task.status==="已完成") return "";
+        if(task.status==="失败"||task.status==="待整改") return "bad";
+        return "warn";
+      }
+      function matchTaskRowHtml(task) {
+        return '<div class="match-task-row" onclick="openMatchTaskDetail(\''+task.id+'\')"><div class="type-icon">⌖</div><div><b>'+escapeHtml(task.name)+'</b><small>'+escapeHtml(task.ps)+' → '+escapeHtml(task.building)+' · '+task.time+'</small></div><div class="match-task-progress"><div class="progress"><i style="width:'+task.progress+'%"></i></div><span>'+task.progress+'%</span></div><span class="tag '+matchTaskTagClass(task)+'">'+task.status+'</span></div>';
+      }
+      function renderMatchTasks() {
+        var list=document.getElementById("matchTaskList");
+        if(list) list.innerHTML=MATCH_TASKS.map(matchTaskRowHtml).join("");
+        if(activeMatchTaskId && document.getElementById("matchTaskDetailOverlay").classList.contains("show")) renderMatchTaskDetail(activeMatchTaskId);
+      }
+      function createMatchTaskFromModal() {
+        var now=new Date(),stamp=currentDateStamp();
+        var name=(document.getElementById("matchTaskName").value||defaultMatchTaskName()).trim();
+        var task={id:"MAT-"+stamp+"-"+String(Math.floor(Math.random()*900)+100),name:name,ps:document.getElementById("matchTaskPs").value,building:document.getElementById("matchTaskBuilding").value,method:document.getElementById("matchTaskMethod").value,buffer:document.getElementById("matchTaskBuffer").value+"米",progress:5,status:"运行中",stage:"检查输入数据",time:String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"),started:now.toLocaleString("zh-CN",{hour12:false}),matched:"计算中",unmatched:"计算中"};
+        MATCH_TASKS.unshift(task);
+        closeMatchTaskModal();
+        renderMatchTasks();
+        toast("匹配任务“"+name+"”已创建");
+        startMatchTaskSimulation(task.id);
+        setTimeout(function(){openMatchTaskDetail(task.id)},220);
+      }
+      function startMatchTaskSimulation(id) {
+        var timerId=setInterval(function(){
+          var task=MATCH_TASKS.find(function(t){return t.id===id});
+          if(!task||task.progress>=100){clearInterval(timerId);return;}
+          task.progress=Math.min(100,task.progress+Math.floor(Math.random()*10)+5);
+          if(task.progress<20){task.stage="检查输入数据";task.status="运行中"}
+          else if(task.progress<45){task.stage="构建空间索引";task.status="运行中"}
+          else if(task.progress<70){task.stage="执行面内与缓冲匹配";task.status="匹配中"}
+          else if(task.progress<90){task.stage="复核冲突和未匹配对象";task.status="复核中"}
+          else if(task.progress<100){task.stage="写入匹配成果";task.status="入库中"}
+          else {task.stage="匹配成果已入库";task.status="已完成";task.matched="1,050,671点";task.unmatched="206,219点";addSystemMessage({type:"success",icon:"⌖",title:task.name+"已完成",summary:"PS点与房屋匹配成果已写入关联关系库。",category:"匹配任务",detail:"匹配任务已完成数据检查、空间索引、规则匹配、冲突复核和成果入库。",fields:{"任务编号":task.id,"已匹配":task.matched,"未匹配":task.unmatched,"匹配方式":task.method}})}
+          renderMatchTasks();
+        },3200);
+      }
+      function renderMatchTaskDetail(id) {
+        var task=MATCH_TASKS.find(function(t){return t.id===id});
+        if(!task) return;
+        activeMatchTaskId=id;
+        document.getElementById("matchTaskDetailTitle").textContent=task.name;
+        document.getElementById("matchTaskDetailSub").textContent=task.id+" · "+task.started+"开始";
+        var stages=["检查输入数据","构建空间索引","执行面内匹配","边界缓冲补充匹配","冲突与未匹配复核","匹配成果入库"];
+        var idx=Math.min(5,Math.floor(task.progress/18));
+        var pipeline=stages.map(function(s,i){var state=task.progress>=100||i<idx?"done":(i===idx?"running":"");return '<div class="pipeline-step '+state+'"><i class="pipeline-dot">'+(state==="done"?"✓":(state==="running"?"↻":i+1))+'</i><div><b>'+s+'</b><p>'+(i===0?'校验PS点、房屋图层、坐标系与必填字段':'按任务规则自动执行并记录过程日志')+'</p></div><time>'+(state==="done"?"已完成":(state==="running"?"执行中":"等待中"))+'</time></div>'}).join("");
+        document.getElementById("matchTaskDetailBody").innerHTML='<div class="match-task-detail-grid"><div class="task-kpi"><span>当前状态</span><b>'+task.status+'</b></div><div class="task-kpi"><span>已匹配PS点</span><b>'+task.matched+'</b></div><div class="task-kpi"><span>未匹配PS点</span><b>'+task.unmatched+'</b></div></div><div class="detail-progress-card"><div class="detail-progress-head"><b>'+task.stage+'</b><strong>'+task.progress+'%</strong></div><div class="progress"><i style="width:'+task.progress+'%"></i></div></div><div class="pipeline-card"><div class="card-head" style="margin-bottom:0"><h3>匹配任务执行流程</h3><span>'+task.method+' · 缓冲'+task.buffer+'</span></div><div class="pipeline-list">'+pipeline+'</div></div>';
+      }
+      function openMatchTaskDetail(id) {
+        document.getElementById("matchTaskDetailOverlay").classList.add("show");
+        renderMatchTaskDetail(id);
+      }
+      function closeMatchTaskDetail() {
+        document.getElementById("matchTaskDetailOverlay").classList.remove("show");
+        activeMatchTaskId=null;
+      }
+
+      function initWizardDrag() {
+        var wizard=document.querySelector("#mask .wizard"),head=document.querySelector("#mask .wiz-head");
+        if(!wizard||!head) return;
+        var drag=null;
+        head.addEventListener("pointerdown",function(e){
+          if(e.target.closest("button,input,select,a")) return;
+          var rect=wizard.getBoundingClientRect();
+          wizard.style.left=rect.left+"px";
+          wizard.style.top=rect.top+"px";
+          wizard.style.transform="none";
+          wizard.classList.add("dragging");
+          drag={dx:e.clientX-rect.left,dy:e.clientY-rect.top};
+          head.setPointerCapture&&head.setPointerCapture(e.pointerId);
+          e.preventDefault();
+        });
+        head.addEventListener("pointermove",function(e){
+          if(!drag) return;
+          var maxLeft=Math.max(8,window.innerWidth-wizard.offsetWidth-8);
+          var maxTop=Math.max(8,window.innerHeight-wizard.offsetHeight-8);
+          wizard.style.left=Math.min(maxLeft,Math.max(8,e.clientX-drag.dx))+"px";
+          wizard.style.top=Math.min(maxTop,Math.max(8,e.clientY-drag.dy))+"px";
+        });
+        function endDrag(){drag=null;wizard.classList.remove("dragging")}
+        head.addEventListener("pointerup",endDrag);
+        head.addEventListener("pointercancel",endDrag);
+      }
+
+      document.querySelectorAll(".rule[data-rule]").forEach(function(r) {
+        r.onclick=function() {
+          document.querySelectorAll(".rule[data-rule]").forEach(function(x) {
+            x.classList.remove("active")
+          });r.classList.add("active");document.getElementById("auditTitle").textContent=r.dataset.rule+" · 参数";toast("已切换到"+r.dataset.rule)
+        }
+      });
+      function simulateAudit() {
+        toast("质检完成：发现127项示例问题，已在地图中高亮")
+      }
+
+      document.addEventListener("click",function(event) {
+        var sw=event.target.closest(".switch");
+        if(sw) {
+          sw.classList.toggle("off");
+          toast(sw.classList.contains("off")?"该选项已关闭":"该选项已启用");
+          return;
+        }
+        var btn=event.target.closest("#mask .btn");
+        if(btn && !btn.getAttribute("onclick")) {
+          toast((btn.textContent||"操作").trim()+"已执行");
+        }
+      });
+      document.addEventListener("change",function(event) {
+        if(event.target.closest("#mask") && (event.target.matches("select") || event.target.matches("input") || event.target.matches("textarea"))) {
+          if(event.target.id!=="directoryPicker") toast("配置项已更新并暂存");
+        }
+      });
+      renderTasks();
+      renderTypePicker();
+      renderResourceManagement();
+      renderMatchTasks();
+      initWizardDrag();
+      updateMessageBadge();
+
+      /* ===================== PS点/房屋匹配 · 真实Leaflet地图 ===================== */
+      var matchMap=null, matchMapInited=false, matchLayerGroup=null;
+      var MATCH_CENTER=[31.5376,104.6920]; // 绵阳市涪城区示范区
+      var MATCH_ZOOM=18;
+
+      // 将“东偏移(米)/北偏移(米)”换算为经纬度。
+      // 下列轮廓依据当前Esri卫星影像中可辨识的屋顶边缘逐点校准，不再使用与影像无关的规则矩形。
+      function metersToLatLng(east,north) {
+        var lat=MATCH_CENTER[0]+north/111320;
+        var lon=MATCH_CENTER[1]+east/(111320*Math.cos(MATCH_CENTER[0]*Math.PI/180));
+        return [lat,lon]
+      }
+
+      // 真实影像建筑示例：5个独立屋顶轮廓，坐标为相对MATCH_CENTER的米制偏移。
+      // 名称采用示范编号，避免将影像判读结果误作正式房屋名称或权属信息。
+      var BUILDING_DEFS=[
+        {
+          id:"BLD-A01", name:"示范建筑 A-01（北侧玻璃屋顶）",
+          pts:[[20.8,88.1],[32.0,101.4],[77.7,72.8],[65.5,63.0],[25.9,68.2],[11.6,78.4]]
+        },
+        {
+          id:"BLD-A02", name:"示范建筑 A-02（东侧连廊楼）",
+          pts:[[98.6,77.9],[116.9,61.0],[87.9,27.7],[72.1,41.0]]
+        },
+        {
+          id:"BLD-A03", name:"示范建筑 A-03（西南附属楼）",
+          pts:[[-12.2,44.1],[16.7,32.3],[9.1,9.3],[-21.4,20.6]]
+        },
+        {
+          id:"BLD-A04", name:"示范建筑 A-04（南侧玻璃楼）",
+          pts:[[18.8,27.7],[53.3,18.0],[46.7,0.1],[12.7,9.3]]
+        },
+        {
+          id:"BLD-A05", name:"示范建筑 A-05（东南矩形楼）",
+          pts:[[47.2,10.4],[71.1,7.3],[69.6,-18.3],[43.2,-10.1]]
+        }
+      ];
+
+      // PS永久散射点示例。匹配状态由“点是否落入真实建筑轮廓”实时判断，不再手工指定。
+      var PS_DEFS=[
+        {id:"PS-001",e:31.0,n:80.9,coh:.91,vel:-1.8},
+        {id:"PS-002",e:46.2,n:76.8,coh:.87,vel:-2.1},
+        {id:"PS-003",e:61.5,n:70.7,coh:.94,vel:-1.2},
+        {id:"PS-004",e:97.0,n:61.5,coh:.89,vel:-2.7},
+        {id:"PS-005",e:102.1,n:51.3,coh:.83,vel:-3.1},
+        {id:"PS-006",e:92.0,n:41.0,coh:.92,vel:-2.0},
+        {id:"PS-007",e:-7.2,n:30.8,coh:.78,vel:-1.5},
+        {id:"PS-008",e:3.0,n:25.7,coh:.86,vel:-1.9},
+        {id:"PS-009",e:25.9,n:18.0,coh:.88,vel:-2.4},
+        {id:"PS-010",e:38.6,n:11.9,coh:.90,vel:-2.2},
+        {id:"PS-011",e:53.3,n:0.1,coh:.84,vel:-1.6},
+        {id:"PS-012",e:61.5,n:-7.6,coh:.93,vel:-1.3},
+        {id:"PS-013",e:-30.0,n:71.7,coh:.76,vel:-4.6},
+        {id:"PS-014",e:81.8,n:10.4,coh:.81,vel:-3.8},
+        {id:"PS-015",e:15.7,n:-15.2,coh:.73,vel:-5.2},
+        {id:"PS-016",e:-70.7,n:33.4,coh:.69,vel:-4.1},
+        {id:"PS-017",e:125.0,n:20.6,coh:.79,vel:-3.5},
+        {id:"PS-018",e:66.5,n:89.6,coh:.74,vel:-4.9}
+      ];
+
+      function pointInPolygon(point, polygon) {
+        var x=point[0], y=point[1], inside=false;
+        for(var i=0,j=polygon.length-1;i<polygon.length;j=i++) {
+          var xi=polygon[i][0], yi=polygon[i][1];
+          var xj=polygon[j][0], yj=polygon[j][1];
+          var intersect=((yi>y)!=(yj>y)) && (x < (xj-xi)*(y-yi)/((yj-yi)||1e-12)+xi);
+          if(intersect) inside=!inside
+        }
+        return inside
+      }
+
+      function matchedBuilding(ps) {
+        for(var i=0;i<BUILDING_DEFS.length;i++) {
+          if(pointInPolygon([ps.e,ps.n],BUILDING_DEFS[i].pts)) return BUILDING_DEFS[i]
+        }
+        return null
+      }
+
+      function polygonArea(points) {
+        var area=0;
+        for(var i=0,j=points.length-1;i<points.length;j=i++) {
+          area+=(points[j][0]*points[i][1]-points[i][0]*points[j][1])
+        }
+        return Math.abs(area/2)
+      }
+
+      function initMatchMap() {
+        if(typeof L==="undefined") {
+          var unavailable=document.getElementById("matchMapLoading");
+          if(unavailable) { unavailable.textContent="地图组件未加载，请联网后刷新页面；其他匹配任务功能仍可正常演示。"; unavailable.classList.remove("hide"); unavailable.style.display="flex"; }
+          return;
+        }
+        if(matchMapInited) {
+          setTimeout(function() { matchMap.invalidateSize() },60);
+          return
+        }
+        matchMapInited=true;
+        matchMap=L.map("matchMap",{
+          zoomControl:false,
+          attributionControl:false,
+          preferCanvas:true,
+          minZoom:16,
+          maxZoom:20
+        }).setView(MATCH_CENTER,MATCH_ZOOM);
+
+        var imagery=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+          maxZoom:20,
+          maxNativeZoom:19,
+          updateWhenZooming:false,
+          keepBuffer:2,
+          attribution:"Esri, Maxar, Earthstar Geographics"
+        }).addTo(matchMap);
+
+        L.control.zoom({position:"bottomright"}).addTo(matchMap);
+        L.control.attribution({position:"bottomright",prefix:false}).addTo(matchMap);
+        matchLayerGroup=L.layerGroup().addTo(matchMap);
+        renderMatchScene();
+
+        try {
+          var bounds=matchLayerGroup.getBounds();
+          if(bounds && bounds.isValid()) matchMap.fitBounds(bounds,{padding:[34,34],maxZoom:18})
+        } catch(e) {}
+
+        imagery.on("tileerror",function() {
+          var loading=document.getElementById("matchMapLoading");
+          if(loading && !loading.classList.contains("hide")) loading.textContent="卫星影像加载较慢，请检查网络连接…"
+        })
+      }
+
+      function psIcon(unmatched) {
+        return L.divIcon({
+          className:"",
+          html:'<i class="ps-dot'+(unmatched ? " bad" : "")+'"></i>',
+          iconSize:[10,10],
+          iconAnchor:[5,5]
+        })
+      }
+
+      function renderMatchScene() {
+        var matchedCount=0,unmatchedCount=0;
+        matchLayerGroup.clearLayers();
+
+        BUILDING_DEFS.forEach(function(b) {
+          var latlngs=b.pts.map(function(p) { return metersToLatLng(p[0],p[1]) });
+          var area=Math.round(polygonArea(b.pts));
+          var poly=L.polygon(latlngs,{
+            color:"#2b6bff",
+            weight:2.4,
+            opacity:.95,
+            fillColor:"#ff7a45",
+            fillOpacity:.16,
+            lineJoin:"round"
+          }).addTo(matchLayerGroup);
+          poly.bindPopup(
+            '<div class="ps-pop"><b style="color:#2b6bff">实际房屋轮廓</b><br>'+b.name+
+            '<br>建筑编号：'+b.id+
+            '<br>判读面积：约 '+area+' ㎡'+
+            '<br>轮廓来源：当前卫星影像屋顶边缘校准</div>'
+          )
+        });
+
+        PS_DEFS.forEach(function(p) {
+          var building=matchedBuilding(p);
+          var unmatched=!building;
+          var pt=metersToLatLng(p.e,p.n);
+          var popup=unmatched ?
+            '<div class="ps-pop"><b style="color:#8bc34a">未匹配PS点</b><br>点号：'+p.id+
+            '<br>相干系数：'+p.coh.toFixed(2)+
+            '<br>形变速率：'+p.vel.toFixed(1)+' mm/a'+
+            '<br>原因：点位落在道路、绿地或建筑轮廓之外<br>建议：结合3 m缓冲区人工复核</div>' :
+            '<div class="ps-pop"><b style="color:#e8791a">已匹配PS点</b><br>点号：'+p.id+
+            '<br>相干系数：'+p.coh.toFixed(2)+
+            '<br>形变速率：'+p.vel.toFixed(1)+' mm/a'+
+            '<br>归属房屋：'+building.id+'<br>'+building.name+'</div>';
+          L.marker(pt,{icon:psIcon(unmatched),zIndexOffset:unmatched?700:650})
+            .addTo(matchLayerGroup)
+            .bindPopup(popup);
+          unmatched ? unmatchedCount++ : matchedCount++
+        });
+
+        var loading=document.getElementById("matchMapLoading");
+        if(loading) {
+          loading.textContent="实际建筑轮廓 "+BUILDING_DEFS.length+" 栋 · PS点 "+(matchedCount+unmatchedCount)+" 个（已匹配 "+matchedCount+" / 未匹配 "+unmatchedCount+"）";
+          loading.classList.add("hide");
+          setTimeout(function() { loading.style.display="none" },350)
+        }
+      }
+      var timer;
+      function toast(msg) {
+        var t=document.getElementById("toast");
+        t.textContent=msg;
+        t.classList.add("show");
+        clearTimeout(timer);
+        timer=setTimeout(function() {
+          t.classList.remove("show")
+        },2600)
+      }
+    </script>
+  </body>
+</html>
